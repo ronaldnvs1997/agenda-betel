@@ -822,9 +822,40 @@
       'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
     ];
 
+    const STORAGE_KEY_COORD = 'betel_coord_sessao_v1';
+
+    async function restaurarSessaoCoordenador() {
+      try {
+        const salvo = localStorage.getItem(STORAGE_KEY_COORD);
+        if (!salvo) return;
+        const dadosSalvos = JSON.parse(salvo);
+        if (!dadosSalvos || !dadosSalvos.id) return;
+
+        // Valida no Supabase se o coordenador continua ativo
+        const { data, error } = await db
+          .from('coordenadores')
+          .select('id, nome, login, ativo')
+          .eq('id', dadosSalvos.id)
+          .eq('ativo', true)
+          .maybeSingle();
+
+        if (!error && data) {
+          modoCoordenador = true;
+          coordenadorAtual = data;
+          localStorage.setItem(STORAGE_KEY_COORD, JSON.stringify(data));
+          atualizarInterfaceCoordenador();
+        } else {
+          localStorage.removeItem(STORAGE_KEY_COORD);
+        }
+      } catch (e) {
+        console.warn('Erro ao restaurar sessão:', e);
+        localStorage.removeItem(STORAGE_KEY_COORD);
+      }
+    }
+
     // Inicialização
     document.addEventListener('DOMContentLoaded', async () => {
-      await Promise.all([carregarEventos(), carregarReservas()]);
+      await Promise.all([carregarEventos(), carregarReservas(), restaurarSessaoCoordenador()]);
 
       const params = new URLSearchParams(window.location.search);
       const eventoIdParam = params.get('evento');
@@ -1514,6 +1545,7 @@
       } else {
         modoCoordenador = false;
         coordenadorAtual = null;
+        localStorage.removeItem(STORAGE_KEY_COORD);
         atualizarInterfaceCoordenador();
         if (eventoSelecionado) abrirPaginaEvento(eventoSelecionado.id);
         mostrarAviso('Você saiu do Modo Coordenador.', 'info');
@@ -1568,6 +1600,7 @@
 
       modoCoordenador = true;
       coordenadorAtual = data;
+      localStorage.setItem(STORAGE_KEY_COORD, JSON.stringify(data));
       fecharModalLoginCoord();
       atualizarInterfaceCoordenador();
       if (eventoSelecionado) abrirPaginaEvento(eventoSelecionado.id);
