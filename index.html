@@ -32,8 +32,8 @@
   </script>
   <style>
     body { background-color: #FFFBF5; color: #2D1A1A; }
-    .calendar-cell { min-height: 110px; transition: all 0.15s ease; }
-    @media (max-width: 640px) { .calendar-cell { min-height: 82px; } }
+    .calendar-cell { min-height: 115px; transition: all 0.15s ease; }
+    @media (max-width: 640px) { .calendar-cell { min-height: 85px; } }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -47,7 +47,7 @@
         </div>
         <div>
           <h1 class="font-serif text-lg sm:text-xl font-bold tracking-wide leading-tight">Igreja Batista Betel</h1>
-          <p class="text-xs text-betel-dourado/80">Agenda Ministerial &amp; Ficha de Eventos</p>
+          <p class="text-xs text-betel-dourado/80">Agenda Ministerial, Reservas &amp; Ficha de Eventos</p>
         </div>
       </div>
 
@@ -67,11 +67,17 @@
   <!-- Barra de Alerta do Modo Coordenador -->
   <div id="barra-coordenador" class="hidden bg-amber-100 border-b border-amber-300 text-amber-950 px-4 py-2.5 text-xs sm:text-sm">
     <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
-      <span><strong>Modo Coordenador Ativo:</strong> Você pode criar novos eventos, alterar datas ou excluir compromissos.</span>
-      <button onclick="abrirModalNovoEvento()"
-        class="bg-betel-vinho text-betel-dourado px-3 py-1 rounded-md font-semibold hover:bg-betel-vinhoEscuro transition">
-        + Novo Evento
-      </button>
+      <span><strong>Modo Coordenador Ativo:</strong> Gerencie eventos oficiais e reservas de espaços.</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <button onclick="abrirModalNovoEvento()"
+          class="bg-betel-vinho text-betel-dourado px-3 py-1.5 rounded-md font-semibold hover:bg-betel-vinhoEscuro transition shadow-sm">
+          + Novo Evento
+        </button>
+        <button onclick="abrirModalReserva()"
+          class="bg-amber-800 text-white px-3 py-1.5 rounded-md font-semibold hover:bg-amber-900 transition shadow-sm">
+          🏛️ Reservar Espaço / Templo
+        </button>
+      </div>
     </div>
   </div>
 
@@ -92,9 +98,12 @@
           <button onclick="mudarMes(1)" class="p-2 rounded-lg hover:bg-stone-100 text-betel-vinho font-bold" title="Próximo mês">▶</button>
         </div>
 
-        <div class="flex items-center gap-3 text-xs text-stone-600">
+        <div class="flex flex-wrap items-center gap-4 text-xs text-stone-600">
           <span class="inline-flex items-center gap-1.5">
-            <span class="w-3 h-3 rounded-sm bg-betel-vinho inline-block"></span> Evento (clique para preencher/ver)
+            <span class="w-3 h-3 rounded-sm bg-betel-vinho inline-block"></span> Evento (clique para preencher)
+          </span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-sm bg-amber-200 border border-amber-500 inline-block"></span> Reserva de Espaço
           </span>
           <button onclick="irParaDataInicial()" class="text-betel-vinho underline font-medium hover:text-betel-vinhoEscuro">
             Ir para Fev/2027
@@ -116,10 +125,17 @@
         <div id="grade-dias" class="grid grid-cols-7 divide-x divide-y divide-stone-200"></div>
       </div>
 
-      <!-- Lista Resumida do Mês -->
-      <div class="mt-6 bg-white p-5 rounded-xl shadow-sm border border-stone-200">
-        <h3 class="font-serif text-lg font-bold text-betel-vinho mb-3">Eventos Programados neste Mês</h3>
-        <div id="lista-eventos-mes" class="space-y-2"></div>
+      <!-- Listas Resumidas do Mês (Eventos + Reservas) -->
+      <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-stone-200">
+          <h3 class="font-serif text-lg font-bold text-betel-vinho mb-3">Eventos Programados neste Mês</h3>
+          <div id="lista-eventos-mes" class="space-y-2"></div>
+        </div>
+
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-stone-200">
+          <h3 class="font-serif text-lg font-bold text-amber-900 mb-3">Reservas de Espaços neste Mês</h3>
+          <div id="lista-reservas-mes" class="space-y-2"></div>
+        </div>
       </div>
     </section>
 
@@ -159,7 +175,7 @@
                   <p id="mural-horario" class="font-semibold text-white">—</p>
                 </div>
                 <div>
-                  <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Local</span>
+                  <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Espaços Reservados</span>
                   <p id="mural-local" class="font-semibold text-white">—</p>
                 </div>
               </div>
@@ -231,20 +247,34 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-semibold text-stone-700 mb-1">Horário de Início / Término *</label>
-                <input type="text" id="input-horario" required placeholder="Ex: 19h00 às 22h00"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
-              </div>
-              <div>
-                <label class="block text-xs font-semibold text-stone-700 mb-1">Local do Evento *</label>
-                <input type="text" id="input-local" required placeholder="Ex: Templo Principal / Chácara Betel"
-                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+            <div>
+              <label class="block text-xs font-semibold text-stone-700 mb-1">Horário de Início / Término *</label>
+              <input type="text" id="input-horario" required placeholder="Ex: 19h00 às 22h00"
+                class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+            </div>
+
+            <!-- Local do Evento com 3 Opções Fixas (Múltipla Escolha) -->
+            <div class="p-4 rounded-xl bg-stone-50 border border-stone-200">
+              <label class="block text-xs font-bold uppercase tracking-wider text-betel-vinho mb-2">
+                Local do Evento * <span class="font-normal normal-case text-stone-500">(marque um ou mais espaços)</span>
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-stone-300 bg-white cursor-pointer hover:border-betel-vinho">
+                  <input type="checkbox" name="evento-local" value="Templo" class="w-4 h-4 accent-[#582121]" />
+                  <span class="text-sm font-medium text-stone-800">Templo</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-stone-300 bg-white cursor-pointer hover:border-betel-vinho">
+                  <input type="checkbox" name="evento-local" value="Salão de Festas" class="w-4 h-4 accent-[#582121]" />
+                  <span class="text-sm font-medium text-stone-800">Salão de Festas</span>
+                </label>
+                <label class="flex items-center gap-2.5 p-2.5 rounded-lg border border-stone-300 bg-white cursor-pointer hover:border-betel-vinho">
+                  <input type="checkbox" name="evento-local" value="Quadra" class="w-4 h-4 accent-[#582121]" />
+                  <span class="text-sm font-medium text-stone-800">Quadra</span>
+                </label>
               </div>
             </div>
 
-            <!-- 3 Novas Perguntas de Necessidade de Equipes -->
+            <!-- 3 Perguntas de Necessidade de Equipes -->
             <div class="p-4 rounded-xl bg-betel-creme border border-stone-200 space-y-3">
               <p class="text-xs font-bold uppercase tracking-wider text-betel-vinho">Solicitação de Equipes de Apoio</p>
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -297,7 +327,7 @@
     </section>
   </main>
 
-  <!-- MODAL DO COORDENADOR (CRIAR / MOVER DATA DE EVENTO) -->
+  <!-- MODAL 1: COORDENADOR (CRIAR / MOVER DATA DE EVENTO) -->
   <div id="modal-coord" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
       <h3 id="modal-coord-titulo" class="font-serif text-xl font-bold text-betel-vinho mb-4">Novo Evento no Calendário</h3>
@@ -330,13 +360,162 @@
     </div>
   </div>
 
+  <!-- MODAL 2: RESERVA DE ESPAÇOS (DATA ÚNICA OU EM MASSA / RECORRENTE) -->
+  <div id="modal-reserva" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl my-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif text-xl font-bold text-amber-900">🏛️ Reservar Espaço / Templo</h3>
+        <button onclick="fecharModalReserva()" class="text-stone-400 hover:text-stone-700 font-bold text-lg">✕</button>
+      </div>
+
+      <form onsubmit="salvarReservaCoordenador(event)" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Ministério Solicitante *</label>
+            <input type="text" id="res-ministerio" required placeholder="Ex: Louvor, Louvart, Diaconia..."
+              class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-amber-700" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Finalidade *</label>
+            <input type="text" id="res-motivo" required placeholder="Ex: Ensaio / Reunião"
+              class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-amber-700" />
+          </div>
+        </div>
+
+        <!-- Seleção de Espaços (3 Opções Fixas, Múltipla Escolha) -->
+        <div class="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200">
+          <label class="block text-xs font-bold uppercase tracking-wider text-amber-900 mb-2">
+            Espaços a Reservar * <span class="font-normal normal-case text-stone-600">(pode marcar mais de um)</span>
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-amber-300 bg-white cursor-pointer hover:bg-amber-50">
+              <input type="checkbox" name="res-espaco" value="Templo" class="w-4 h-4 accent-amber-800" />
+              <span class="text-xs font-semibold text-stone-800">Templo</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-amber-300 bg-white cursor-pointer hover:bg-amber-50">
+              <input type="checkbox" name="res-espaco" value="Salão de Festas" class="w-4 h-4 accent-amber-800" />
+              <span class="text-xs font-semibold text-stone-800">Salão de Festas</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg border border-amber-300 bg-white cursor-pointer hover:bg-amber-50">
+              <input type="checkbox" name="res-espaco" value="Quadra" class="w-4 h-4 accent-amber-800" />
+              <span class="text-xs font-semibold text-stone-800">Quadra</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Horário Início *</label>
+            <input type="time" id="res-inicio" required value="19:30"
+              class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-amber-700" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Horário Término *</label>
+            <input type="time" id="res-fim" required value="21:00"
+              class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-amber-700" />
+          </div>
+        </div>
+
+        <!-- Tipo de Agendamento: Data Única vs Reserva em Massa -->
+        <div class="p-3.5 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
+          <label class="block text-xs font-bold uppercase tracking-wider text-stone-700">Frequência da Reserva</label>
+          <div class="flex gap-4">
+            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              <input type="radio" name="res-tipo" value="unica" checked onchange="alternarTipoReserva()" class="accent-amber-800" />
+              Data Específica
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+              <input type="radio" name="res-tipo" value="massa" onchange="alternarTipoReserva()" class="accent-amber-800" />
+              Reserva em Massa (Recorrente)
+            </label>
+          </div>
+
+          <!-- Bloco Data Única -->
+          <div id="bloco-res-unica">
+            <label class="block text-xs font-semibold text-stone-700 mb-1">Data da Reserva *</label>
+            <input type="date" id="res-data-unica"
+              class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm bg-white" />
+          </div>
+
+          <!-- Bloco Reserva em Massa -->
+          <div id="bloco-res-massa" class="hidden space-y-3 pt-1">
+            <div>
+              <label class="block text-xs font-semibold text-stone-700 mb-1">Dia da Semana *</label>
+              <select id="res-dia-semana" class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm bg-white">
+                <option value="1">Todas as Segundas-feiras</option>
+                <option value="2">Todas as Terças-feiras</option>
+                <option value="3">Todas as Quartas-feiras</option>
+                <option value="4">Todas as Quintas-feiras</option>
+                <option value="5">Todas as Sextas-feiras</option>
+                <option value="6">Todos os Sábados</option>
+                <option value="0">Todos os Domingos</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">A partir de *</label>
+                <input type="date" id="res-data-inicio-massa"
+                  class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm bg-white" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Até o dia *</label>
+                <input type="date" id="res-data-fim-massa"
+                  class="w-full px-3 py-2 rounded-lg border border-stone-300 text-sm bg-white" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalReserva()" class="px-4 py-2 rounded-lg text-sm text-stone-600 hover:bg-stone-100">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-salvar-reserva"
+            class="px-5 py-2 rounded-lg text-sm font-bold bg-amber-800 text-white hover:bg-amber-900 shadow">
+            Confirmar Reserva(s)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL 3: DETALHES DA RESERVA (VISUALIZAÇÃO + EXCLUSÃO PELO COORDENADOR) -->
+  <div id="modal-detalhe-reserva" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl border-t-4 border-amber-700">
+      <div class="flex items-center justify-between mb-3">
+        <span class="px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase">
+          Reserva de Espaço
+        </span>
+        <button onclick="fecharModalDetalheReserva()" class="text-stone-400 hover:text-stone-700 font-bold">✕</button>
+      </div>
+      <h3 id="det-res-titulo" class="font-serif text-xl font-bold text-stone-900 mb-1">Louvor — Ensaio</h3>
+      <p id="det-res-data" class="text-sm text-stone-500 mb-4">Data</p>
+
+      <div class="space-y-2.5 text-sm bg-stone-50 p-4 rounded-xl border border-stone-200 mb-5">
+        <p><strong>Espaço(s):</strong> <span id="det-res-espacos" class="text-amber-900 font-semibold">—</span></p>
+        <p><strong>Horário:</strong> <span id="det-res-horario">—</span></p>
+        <p><strong>Ministério:</strong> <span id="det-res-ministerio">—</span></p>
+        <p><strong>Finalidade:</strong> <span id="det-res-motivo">—</span></p>
+      </div>
+
+      <div id="acoes-coord-reserva" class="hidden flex flex-col gap-2">
+        <button onclick="excluirReservaUnica()" class="w-full py-2 rounded-lg bg-red-100 text-red-800 text-xs font-bold hover:bg-red-200">
+          🗑️ Excluir Apenas Esta Reserva
+        </button>
+        <button id="btn-excluir-lote" onclick="excluirReservaLote()" class="hidden w-full py-2 rounded-lg bg-red-700 text-white text-xs font-bold hover:bg-red-800">
+          🗑️ Excluir Todas as Reservas Desta Série (Em Massa)
+        </button>
+      </div>
+    </div>
+  </div>
+
   <footer class="text-center text-xs text-stone-500 py-5 border-t border-stone-200 mt-8">
     Igreja Batista Betel • Sistema Integrado de Calendário Ministerial e PDF Interativo
   </footer>
 
   <script>
     // =========================================================================
-    // CONFIGURAÇÃO DO SUPABASE (JÁ CONECTADO AO SEU PROJETO)
+    // CONFIGURAÇÃO DO SUPABASE
     // =========================================================================
     const SUPABASE_URL = 'https://vucinpcbgtwulsahuojl.supabase.co';
     const SUPABASE_ANON_KEY = 'sb_publishable_8-jx5FkDH6DkWOJSsq6saA_1MAlCAss';
@@ -346,10 +525,12 @@
 
     // Estado da Aplicação
     let eventos = [];
+    let reservas = [];
     let anoAtual = 2027;
     let mesAtual = 1; // 0 = Janeiro, 1 = Fevereiro
     let modoCoordenador = false;
     let eventoSelecionado = null;
+    let reservaSelecionada = null;
 
     const NOMES_MESES = [
       'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -358,9 +539,8 @@
 
     // Inicialização
     document.addEventListener('DOMContentLoaded', async () => {
-      await carregarEventos();
+      await Promise.all([carregarEventos(), carregarReservas()]);
 
-      // Verifica se o link veio de um clique no PDF (?evento=ID)
       const params = new URLSearchParams(window.location.search);
       const eventoIdParam = params.get('evento');
       if (eventoIdParam) {
@@ -385,22 +565,28 @@
       else el.classList.add('bg-amber-100', 'text-amber-800');
       el.textContent = texto;
       if (tipo === 'sucesso') {
-        setTimeout(() => el.classList.add('hidden'), 4000);
+        setTimeout(() => el.classList.add('hidden'), 4500);
       }
     }
 
     async function carregarEventos() {
-      const { data, error } = await db
-        .from('eventos')
-        .select('*')
-        .order('data', { ascending: true });
-
+      const { data, error } = await db.from('eventos').select('*').order('data', { ascending: true });
       if (error) {
         console.error(error);
-        mostrarAviso('Erro ao conectar com o banco de dados: ' + error.message, 'erro');
+        mostrarAviso('Erro ao carregar eventos: ' + error.message, 'erro');
         return;
       }
       eventos = data || [];
+    }
+
+    async function carregarReservas() {
+      const { data, error } = await db.from('reservas').select('*').order('data', { ascending: true });
+      if (error) {
+        console.warn('Tabela reservas ainda não criada ou erro de leitura:', error.message);
+        reservas = [];
+        return;
+      }
+      reservas = data || [];
     }
 
     function mudarMes(delta) {
@@ -424,7 +610,6 @@
       const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
       const totalDiasMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
 
-      // Células vazias antes do dia 1
       for (let i = 0; i < primeiroDiaSemana; i++) {
         const vazia = document.createElement('div');
         vazia.className = 'calendar-cell bg-stone-50/70 p-2';
@@ -433,12 +618,16 @@
 
       const mesStr = String(mesAtual + 1).padStart(2, '0');
       const eventosDoMes = [];
+      const reservasDoMes = [];
 
       for (let dia = 1; dia <= totalDiasMes; dia++) {
         const diaStr = String(dia).padStart(2, '0');
         const dataISO = `${anoAtual}-${mesStr}-${diaStr}`;
         const eventosDia = eventos.filter(e => e.data === dataISO);
+        const reservasDia = reservas.filter(r => r.data === dataISO);
+
         eventosDoMes.push(...eventosDia);
+        reservasDoMes.push(...reservasDia);
 
         const celula = document.createElement('div');
         celula.className = 'calendar-cell p-1.5 sm:p-2 flex flex-col justify-between bg-white hover:bg-betel-creme';
@@ -448,12 +637,24 @@
         topo.innerHTML = `<span class="text-xs sm:text-sm font-bold ${eventosDia.length ? 'text-betel-vinho' : 'text-stone-500'}">${dia}</span>`;
 
         if (modoCoordenador) {
-          const btnAdd = document.createElement('button');
-          btnAdd.textContent = '+';
-          btnAdd.title = 'Adicionar evento neste dia';
-          btnAdd.className = 'text-xs px-1.5 py-0.5 rounded bg-stone-200 hover:bg-betel-vinho hover:text-white font-bold';
-          btnAdd.onclick = () => abrirModalNovoEvento(dataISO);
-          topo.appendChild(btnAdd);
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'flex gap-1';
+
+          const btnAddRes = document.createElement('button');
+          btnAddRes.textContent = '🏛️';
+          btnAddRes.title = 'Reservar espaço neste dia';
+          btnAddRes.className = 'text-[10px] px-1 py-0.5 rounded bg-amber-100 hover:bg-amber-300';
+          btnAddRes.onclick = () => abrirModalReserva(dataISO);
+
+          const btnAddEv = document.createElement('button');
+          btnAddEv.textContent = '+';
+          btnAddEv.title = 'Adicionar evento neste dia';
+          btnAddEv.className = 'text-xs px-1.5 py-0.5 rounded bg-stone-200 hover:bg-betel-vinho hover:text-white font-bold';
+          btnAddEv.onclick = () => abrirModalNovoEvento(dataISO);
+
+          btnGroup.appendChild(btnAddRes);
+          btnGroup.appendChild(btnAddEv);
+          topo.appendChild(btnGroup);
         }
 
         celula.appendChild(topo);
@@ -461,6 +662,7 @@
         const listaPills = document.createElement('div');
         listaPills.className = 'mt-1 space-y-1';
 
+        // Eventos (Vinho)
         eventosDia.forEach(ev => {
           const pill = document.createElement('button');
           pill.className = 'w-full text-left px-2 py-1 rounded bg-betel-vinho text-betel-dourado text-[11px] sm:text-xs font-semibold leading-tight hover:bg-betel-vinhoEscuro shadow-sm transition truncate block';
@@ -470,30 +672,30 @@
           listaPills.appendChild(pill);
         });
 
+        // Reservas de Espaço (Âmbar / Dourado)
+        reservasDia.forEach(res => {
+          const pillRes = document.createElement('button');
+          pillRes.className = 'w-full text-left px-1.5 py-0.5 rounded bg-amber-100 border border-amber-400 text-amber-950 text-[10px] sm:text-[11px] font-medium leading-tight hover:bg-amber-200 transition truncate block';
+          pillRes.textContent = `🏛️ ${res.ministerio}: ${res.espacos}`;
+          pillRes.title = `Reserva (${res.espacos}) • ${res.horario_inicio} às ${res.horario_fim} • ${res.motivo}`;
+          pillRes.onclick = () => abrirDetalheReserva(res.id);
+          listaPills.appendChild(pillRes);
+        });
+
         celula.appendChild(listaPills);
         grade.appendChild(celula);
       }
 
-      // Lista resumida abaixo do calendário
-      const listaEl = document.getElementById('lista-eventos-mes');
+      // Lista resumida de Eventos
+      const listaEvEl = document.getElementById('lista-eventos-mes');
       if (eventosDoMes.length === 0) {
-        listaEl.innerHTML = `<p class="text-sm text-stone-500">Nenhum evento cadastrado para ${NOMES_MESES[mesAtual]} de ${anoAtual}.</p>`;
+        listaEvEl.innerHTML = `<p class="text-sm text-stone-500">Nenhum evento oficial cadastrado para ${NOMES_MESES[mesAtual]} de ${anoAtual}.</p>`;
       } else {
-        listaEl.innerHTML = eventosDoMes.map(ev => {
+        listaEvEl.innerHTML = eventosDoMes.map(ev => {
           const [a, m, d] = ev.data.split('-');
           const statusPreenchido = ev.lider && ev.lider.trim() !== ''
             ? `<span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Líder: ${ev.lider}</span>`
-            : `<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Aguardando líder preencher</span>`;
-
-          const badgesApoio = [
-            ev.necessita_midia === 'Sim' ? 'Mídia' : '',
-            ev.necessita_louvor === 'Sim' ? 'Louvor' : '',
-            ev.necessita_diaconia === 'Sim' ? 'Diaconia' : ''
-          ].filter(Boolean);
-
-          const textoApoio = badgesApoio.length
-            ? `<span class="text-[11px] text-betel-vinho font-medium">• Apoio: ${badgesApoio.join(', ')}</span>`
-            : '';
+            : `<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Aguardando líder</span>`;
 
           return `
             <div onclick="abrirPaginaEvento(${ev.id})"
@@ -502,7 +704,7 @@
                 <span class="px-2.5 py-1 rounded-md bg-betel-vinho text-betel-dourado font-bold text-xs">${d}/${m}</span>
                 <div>
                   <p class="font-bold text-sm text-betel-vinho">${ev.titulo}</p>
-                  <p class="text-xs text-stone-500">${ev.ministerio || 'Ministério não definido'} ${ev.horario ? '• ' + ev.horario : ''} ${textoApoio}</p>
+                  <p class="text-xs text-stone-500">${ev.local || 'Local a definir'} ${ev.horario ? '• ' + ev.horario : ''}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -513,15 +715,39 @@
           `;
         }).join('');
       }
+
+      // Lista resumida de Reservas
+      const listaResEl = document.getElementById('lista-reservas-mes');
+      if (reservasDoMes.length === 0) {
+        listaResEl.innerHTML = `<p class="text-sm text-stone-500">Nenhuma reserva de espaço registrada para ${NOMES_MESES[mesAtual]} de ${anoAtual}.</p>`;
+      } else {
+        listaResEl.innerHTML = reservasDoMes.map(res => {
+          const [a, m, d] = res.data.split('-');
+          return `
+            <div onclick="abrirDetalheReserva(${res.id})"
+              class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-amber-200 hover:border-amber-600 cursor-pointer transition bg-amber-50/40">
+              <div class="flex items-center gap-3">
+                <span class="px-2.5 py-1 rounded-md bg-amber-800 text-white font-bold text-xs">${d}/${m}</span>
+                <div>
+                  <p class="font-bold text-sm text-amber-950">${res.ministerio} — ${res.motivo}</p>
+                  <p class="text-xs text-stone-600"><strong>${res.espacos}</strong> • ${res.horario_inicio} às ${res.horario_fim}</p>
+                </div>
+              </div>
+              <span class="text-xs font-semibold text-amber-900">Ver →</span>
+            </div>
+          `;
+        }).join('');
+      }
     }
 
-    // Navegação para a Página do Evento
+    // =========================================================================
+    // NAVEGAÇÃO E FICHA DO EVENTO (COM CHECKBOXES FIXOS PARA LOCAL)
+    // =========================================================================
     function abrirPaginaEvento(id) {
       const ev = eventos.find(e => String(e.id) === String(id));
       if (!ev) return;
       eventoSelecionado = ev;
 
-      // Atualiza URL sem recarregar (facilita compartilhar link direto)
       const url = new URL(window.location);
       url.searchParams.set('evento', ev.id);
       window.history.pushState({}, '', url);
@@ -538,14 +764,19 @@
       document.getElementById('mural-midia').textContent = ev.necessita_midia || '—';
       document.getElementById('mural-louvor').textContent = ev.necessita_louvor || '—';
       document.getElementById('mural-diaconia').textContent = ev.necessita_diaconia || '—';
-
       document.getElementById('mural-observacoes').textContent = ev.observacoes || 'Nenhuma observação registrada ainda.';
 
       // Preenche campos do formulário
       document.getElementById('input-lider').value = ev.lider || '';
       document.getElementById('input-ministerio').value = ev.ministerio || '';
       document.getElementById('input-horario').value = ev.horario || '';
-      document.getElementById('input-local').value = ev.local || '';
+
+      // Marca os checkboxes de Local salvos (ex: "Templo, Salão de Festas")
+      const locaisSalvos = (ev.local || '').split(',').map(s => s.trim());
+      document.querySelectorAll('input[name="evento-local"]').forEach(cb => {
+        cb.checked = locaisSalvos.includes(cb.value);
+      });
+
       document.getElementById('input-midia').value = ev.necessita_midia || '';
       document.getElementById('input-louvor').value = ev.necessita_louvor || '';
       document.getElementById('input-diaconia').value = ev.necessita_diaconia || '';
@@ -573,6 +804,14 @@
       e.preventDefault();
       if (!eventoSelecionado) return;
 
+      const locaisMarcados = Array.from(document.querySelectorAll('input[name="evento-local"]:checked'))
+        .map(cb => cb.value);
+
+      if (locaisMarcados.length === 0) {
+        alert('Selecione pelo menos um Local do Evento (Templo, Salão de Festas ou Quadra).');
+        return;
+      }
+
       const btn = document.getElementById('btn-salvar-ficha');
       btn.disabled = true;
       btn.textContent = 'Salvando...';
@@ -581,7 +820,7 @@
         lider: document.getElementById('input-lider').value.trim(),
         ministerio: document.getElementById('input-ministerio').value.trim(),
         horario: document.getElementById('input-horario').value.trim(),
-        local: document.getElementById('input-local').value.trim(),
+        local: locaisMarcados.join(', '),
         necessita_midia: document.getElementById('input-midia').value,
         necessita_louvor: document.getElementById('input-louvor').value,
         necessita_diaconia: document.getElementById('input-diaconia').value,
@@ -589,10 +828,7 @@
         atualizado_em: new Date().toISOString()
       };
 
-      const { error } = await db
-        .from('eventos')
-        .update(atualizacao)
-        .eq('id', eventoSelecionado.id);
+      const { error } = await db.from('eventos').update(atualizacao).eq('id', eventoSelecionado.id);
 
       btn.disabled = false;
       btn.textContent = '💾 Salvar Informações no Mural';
@@ -613,7 +849,7 @@
     }
 
     // =========================================================================
-    // FUNÇÕES DO MODO COORDENADOR (EDITAR CALENDÁRIO / DATAS)
+    // MODO COORDENADOR (EVENTOS)
     // =========================================================================
     function alternarModoCoordenador() {
       if (!modoCoordenador) {
@@ -687,7 +923,7 @@
       } else {
         renderizarCalendario();
       }
-      mostrarAviso('Calendário atualizado! Lembre-se de baixar o novo PDF se houve mudança de data.', 'sucesso');
+      mostrarAviso('Calendário atualizado!', 'sucesso');
     }
 
     async function excluirEventoAtual() {
@@ -706,18 +942,201 @@
     }
 
     // =========================================================================
-    // GERADOR DE PDF INTERATIVO COM LINKS REAIS PARA CADA EVENTO
+    // MODO COORDENADOR (RESERVA DE ESPAÇOS: ÚNICA OU EM MASSA)
+    // =========================================================================
+    function abrirModalReserva(dataPadrao = '') {
+      const hojeStr = dataPadrao || `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}-01`;
+      document.getElementById('res-ministerio').value = '';
+      document.getElementById('res-motivo').value = '';
+      document.querySelectorAll('input[name="res-espaco"]').forEach(cb => cb.checked = false);
+
+      document.getElementById('res-data-unica').value = hojeStr;
+      document.getElementById('res-data-inicio-massa').value = hojeStr;
+      document.getElementById('res-data-fim-massa').value = '2027-06-30';
+
+      document.querySelector('input[name="res-tipo"][value="unica"]').checked = true;
+      alternarTipoReserva();
+      document.getElementById('modal-reserva').classList.remove('hidden');
+    }
+
+    function fecharModalReserva() {
+      document.getElementById('modal-reserva').classList.add('hidden');
+    }
+
+    function alternarTipoReserva() {
+      const tipo = document.querySelector('input[name="res-tipo"]:checked').value;
+      document.getElementById('bloco-res-unica').classList.toggle('hidden', tipo !== 'unica');
+      document.getElementById('bloco-res-massa').classList.toggle('hidden', tipo !== 'massa');
+    }
+
+    async function salvarReservaCoordenador(e) {
+      e.preventDefault();
+
+      const espacosMarcados = Array.from(document.querySelectorAll('input[name="res-espaco"]:checked'))
+        .map(cb => cb.value);
+
+      if (espacosMarcados.length === 0) {
+        alert('Selecione pelo menos um espaço (Templo, Salão de Festas ou Quadra).');
+        return;
+      }
+
+      const ministerio = document.getElementById('res-ministerio').value.trim();
+      const motivo = document.getElementById('res-motivo').value.trim();
+      const horarioInicio = document.getElementById('res-inicio').value;
+      const horarioFim = document.getElementById('res-fim').value;
+      const espacosStr = espacosMarcados.join(', ');
+      const tipo = document.querySelector('input[name="res-tipo"]:checked').value;
+
+      let registrosParaInserir = [];
+
+      if (tipo === 'unica') {
+        const dataUnica = document.getElementById('res-data-unica').value;
+        if (!dataUnica) {
+          alert('Informe a data da reserva.');
+          return;
+        }
+        registrosParaInserir.push({
+          ministerio,
+          motivo,
+          espacos: espacosStr,
+          data: dataUnica,
+          horario_inicio: horarioInicio,
+          horario_fim: horarioFim,
+          lote_id: null
+        });
+      } else {
+        const diaSemanaAlvo = Number(document.getElementById('res-dia-semana').value);
+        const dataInicioStr = document.getElementById('res-data-inicio-massa').value;
+        const dataFimStr = document.getElementById('res-data-fim-massa').value;
+
+        if (!dataInicioStr || !dataFimStr) {
+          alert('Informe a data inicial e a data final para a reserva em massa.');
+          return;
+        }
+
+        const dtInicio = new Date(dataInicioStr + 'T12:00:00');
+        const dtFim = new Date(dataFimStr + 'T12:00:00');
+
+        if (dtFim < dtInicio) {
+          alert('A data final deve ser igual ou posterior à data inicial.');
+          return;
+        }
+
+        const loteId = 'LOTE-' + Date.now();
+        let cursor = new Date(dtInicio);
+
+        while (cursor <= dtFim) {
+          if (cursor.getDay() === diaSemanaAlvo) {
+            const ano = cursor.getFullYear();
+            const mes = String(cursor.getMonth() + 1).padStart(2, '0');
+            const dia = String(cursor.getDate()).padStart(2, '0');
+            registrosParaInserir.push({
+              ministerio,
+              motivo,
+              espacos: espacosStr,
+              data: `${ano}-${mes}-${dia}`,
+              horario_inicio: horarioInicio,
+              horario_fim: horarioFim,
+              lote_id: loteId
+            });
+          }
+          cursor.setDate(cursor.getDate() + 1);
+        }
+
+        if (registrosParaInserir.length === 0) {
+          alert('Nenhuma ocorrência desse dia da semana foi encontrada no período informado.');
+          return;
+        }
+      }
+
+      const btn = document.getElementById('btn-salvar-reserva');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      const { error } = await db.from('reservas').insert(registrosParaInserir);
+
+      btn.disabled = false;
+      btn.textContent = 'Confirmar Reserva(s)';
+
+      if (error) {
+        mostrarAviso('Erro ao salvar reserva (verifique se a tabela reservas foi criada no Supabase): ' + error.message, 'erro');
+        return;
+      }
+
+      fecharModalReserva();
+      await carregarReservas();
+      renderizarCalendario();
+      mostrarAviso(`${registrosParaInserir.length} reserva(s) confirmada(s) no calendário!`, 'sucesso');
+    }
+
+    function abrirDetalheReserva(id) {
+      const res = reservas.find(r => String(r.id) === String(id));
+      if (!res) return;
+      reservaSelecionada = res;
+
+      const [ano, mes, dia] = res.data.split('-');
+      document.getElementById('det-res-titulo').textContent = `${res.ministerio} — ${res.motivo}`;
+      document.getElementById('det-res-data').textContent = `Data: ${dia}/${mes}/${ano}`;
+      document.getElementById('det-res-espacos').textContent = res.espacos;
+      document.getElementById('det-res-horario').textContent = `${res.horario_inicio} às ${res.horario_fim}`;
+      document.getElementById('det-res-ministerio').textContent = res.ministerio;
+      document.getElementById('det-res-motivo').textContent = res.motivo;
+
+      document.getElementById('acoes-coord-reserva').classList.toggle('hidden', !modoCoordenador);
+      document.getElementById('btn-excluir-lote').classList.toggle('hidden', !res.lote_id);
+
+      document.getElementById('modal-detalhe-reserva').classList.remove('hidden');
+    }
+
+    function fecharModalDetalheReserva() {
+      document.getElementById('modal-detalhe-reserva').classList.add('hidden');
+      reservaSelecionada = null;
+    }
+
+    async function excluirReservaUnica() {
+      if (!reservaSelecionada) return;
+      if (!confirm('Deseja excluir apenas esta reserva específica?')) return;
+
+      const { error } = await db.from('reservas').delete().eq('id', reservaSelecionada.id);
+      if (error) {
+        mostrarAviso('Erro ao excluir reserva: ' + error.message, 'erro');
+        return;
+      }
+
+      fecharModalDetalheReserva();
+      await carregarReservas();
+      renderizarCalendario();
+      mostrarAviso('Reserva excluída.', 'sucesso');
+    }
+
+    async function excluirReservaLote() {
+      if (!reservaSelecionada || !reservaSelecionada.lote_id) return;
+      if (!confirm('Deseja excluir TODAS as datas criadas nesta reserva em massa?')) return;
+
+      const { error } = await db.from('reservas').delete().eq('lote_id', reservaSelecionada.lote_id);
+      if (error) {
+        mostrarAviso('Erro ao excluir série de reservas: ' + error.message, 'erro');
+        return;
+      }
+
+      fecharModalDetalheReserva();
+      await carregarReservas();
+      renderizarCalendario();
+      mostrarAviso('Todas as reservas da série foram excluídas.', 'sucesso');
+    }
+
+    // =========================================================================
+    // GERADOR DE PDF INTERATIVO
     // =========================================================================
     function gerarPDFInterativo() {
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const baseUrl = window.location.origin + window.location.pathname;
 
-      // Cabeçalho Vinho (#582121)
       doc.setFillColor(88, 33, 33);
       doc.rect(0, 0, 297, 26, 'F');
 
-      doc.setTextColor(255, 225, 178); // Dourado (#FFE1B2)
+      doc.setTextColor(255, 225, 178);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.text('IGREJA BATISTA BETEL', 14, 11);
@@ -730,7 +1149,6 @@
       doc.setFontSize(15);
       doc.text(`${NOMES_MESES[mesAtual].toUpperCase()} ${anoAtual}`, 283, 15, { align: 'right' });
 
-      // Dias da semana
       const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
       const margemX = 14;
       const topoGrade = 32;
@@ -745,7 +1163,6 @@
         doc.text(dia, margemX + idx * larguraCol + larguraCol / 2, topoGrade + 5.5, { align: 'center' });
       });
 
-      // Grade de dias
       const primeiroDia = new Date(anoAtual, mesAtual, 1).getDay();
       const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
       const totalCelulas = Math.ceil((primeiroDia + totalDias) / 7) * 7;
@@ -768,31 +1185,51 @@
           const diaStr = String(diaContador).padStart(2, '0');
           const dataISO = `${anoAtual}-${mesStr}-${diaStr}`;
           const eventosDia = eventos.filter(e => e.data === dataISO);
+          const reservasDia = reservas.filter(r => r.data === dataISO);
 
           doc.setTextColor(88, 33, 33);
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(9.5);
           doc.text(String(diaContador), x + 2.5, y + 5.5);
 
-          let offsetY = y + 8;
+          let offsetY = y + 7.5;
+
+          // Eventos Clicáveis no PDF
           eventosDia.forEach(ev => {
-            const boxH = 7.5;
+            const boxH = 6.8;
             if (offsetY + boxH <= y + alturaCelula - 1) {
-              // Caixa clicável do evento
               doc.setFillColor(88, 33, 33);
               doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1.2, 1.2, 'F');
 
               doc.setTextColor(255, 225, 178);
               doc.setFont('helvetica', 'bold');
-              doc.setFontSize(7.2);
+              doc.setFontSize(7);
               const tituloCortado = ev.titulo.length > 18 ? ev.titulo.substring(0, 17) + '…' : ev.titulo;
-              doc.text(tituloCortado, x + 2.8, offsetY + 5);
+              doc.text(tituloCortado, x + 2.5, offsetY + 4.6);
 
-              // Link interativo real apontando para a página do evento no Render
               const linkEvento = `${baseUrl}?evento=${ev.id}`;
               doc.link(x + 1.5, offsetY, larguraCol - 3, boxH, { url: linkEvento });
 
-              offsetY += boxH + 1.5;
+              offsetY += boxH + 1.2;
+            }
+          });
+
+          // Reservas de Espaço no PDF
+          reservasDia.forEach(res => {
+            const boxH = 5.5;
+            if (offsetY + boxH <= y + alturaCelula - 1) {
+              doc.setFillColor(254, 243, 199);
+              doc.setDrawColor(217, 119, 6);
+              doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'FD');
+
+              doc.setTextColor(120, 53, 15);
+              doc.setFont('helvetica', 'normal');
+              doc.setFontSize(6.2);
+              const txtRes = `${res.ministerio} (${res.espacos})`;
+              const txtCortado = txtRes.length > 22 ? txtRes.substring(0, 21) + '…' : txtRes;
+              doc.text(txtCortado, x + 2.3, offsetY + 3.8);
+
+              offsetY += boxH + 1;
             }
           });
 
@@ -800,7 +1237,6 @@
         }
       }
 
-      // Rodapé
       doc.setTextColor(120, 110, 110);
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(8);
