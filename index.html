@@ -77,6 +77,10 @@
           class="bg-amber-800 text-white px-3 py-1.5 rounded-md font-semibold hover:bg-amber-900 transition shadow-sm">
           🏛️ Reservar Espaço / Templo
         </button>
+        <button onclick="abrirModalAlterarSenha()"
+          class="bg-white border border-amber-400 text-amber-950 px-3 py-1.5 rounded-md font-semibold hover:bg-amber-50 transition shadow-sm">
+          🔑 Alterar Minha Senha
+        </button>
         <button onclick="abrirModalGestaoCoordenadores()"
           class="bg-stone-800 text-white px-3 py-1.5 rounded-md font-semibold hover:bg-stone-900 transition shadow-sm">
           👥 Gestão de Coordenadores
@@ -747,6 +751,49 @@
     </div>
   </div>
 
+
+  <!-- MODAL 6: ALTERAR SENHA DO COORDENADOR LOGADO -->
+  <div id="modal-alterar-senha" class="hidden fixed inset-0 bg-black/55 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border-t-4 border-amber-700">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-serif text-xl font-bold text-betel-vinho">🔑 Alterar Minha Senha</h3>
+        <button onclick="fecharModalAlterarSenha()" class="text-stone-400 hover:text-stone-700 font-bold text-lg">✕</button>
+      </div>
+      <p class="text-xs text-stone-500 mb-4">
+        Atualize a senha de acesso para <strong id="alterar-senha-usuario-label" class="text-stone-800">Coordenador</strong>.
+      </p>
+
+      <div id="erro-alterar-senha" class="hidden mb-3 p-2.5 rounded-lg bg-red-100 text-red-800 text-xs font-medium"></div>
+
+      <form onsubmit="salvarNovaSenhaCoordenador(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Senha Atual *</label>
+          <input type="password" id="senha-atual-coord" required autocomplete="current-password" placeholder="Digite sua senha atual"
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Nova Senha *</label>
+          <input type="password" id="nova-senha-coord" required autocomplete="new-password" placeholder="Mínimo 4 caracteres"
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Confirmar Nova Senha *</label>
+          <input type="password" id="confirmar-nova-senha-coord" required autocomplete="new-password" placeholder="Repita a nova senha"
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalAlterarSenha()" class="px-4 py-2 rounded-lg text-sm text-stone-600 hover:bg-stone-100">
+            Cancelar
+          </button>
+          <button type="submit" id="btn-salvar-nova-senha"
+            class="px-5 py-2 rounded-lg text-sm font-bold bg-betel-vinho text-betel-dourado hover:bg-betel-vinhoEscuro shadow">
+            Salvar Senha
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <footer class="text-center text-xs text-stone-500 py-5 border-t border-stone-200 mt-8">
     Igreja Batista Betel • Sistema Integrado de Calendário Ministerial e PDF Interativo
   </footer>
@@ -950,31 +997,37 @@
       const trancadoManual = ev.bloqueado === true;
 
       if (modoCoordenador) {
-        return { bloqueadoParaUsuario: false, trancadoManual, dataPassou };
+        return { bloqueadoParaUsuario: false, liberarPosEvento: true, trancadoManual, dataPassou };
       }
 
       if (trancadoManual) {
         return {
           bloqueadoParaUsuario: true,
-          motivo: 'Esta ficha foi trancada manualmente pela coordenação.'
+          liberarPosEvento: false,
+          motivo: 'Esta ficha foi trancada manualmente pela coordenação (inclusive o registro pós-evento).'
         };
       }
 
       if (dataPassou) {
         return {
           bloqueadoParaUsuario: true,
-          motivo: 'A data deste evento já passou. Para alterar qualquer registro histórico, solicite ao Coordenador.'
+          liberarPosEvento: true,
+          motivo: 'A data deste evento já passou. Os dados de planejamento estão bloqueados, mas os campos de Fotos e Vídeos permanecem liberados para registro pós-evento.'
         };
       }
 
-      return { bloqueadoParaUsuario: false, trancadoManual, dataPassou };
+      return { bloqueadoParaUsuario: false, liberarPosEvento: true, trancadoManual, dataPassou };
     }
 
-    function aplicarBloqueioFormulario(bloquear) {
+    function aplicarBloqueioFormulario(bloquear, liberarPosEvento = false) {
       const form = document.getElementById('form-lider');
       const elementos = form.querySelectorAll('input, select, textarea, button[type="submit"]');
       elementos.forEach(el => {
-        el.disabled = bloquear;
+        if (bloquear && liberarPosEvento && (el.id === 'input-link-fotos' || el.id === 'input-link-videos' || el.id === 'btn-salvar-ficha')) {
+          el.disabled = false;
+        } else {
+          el.disabled = bloquear;
+        }
       });
     }
 
@@ -1306,10 +1359,10 @@
       if (statusBloqueio.bloqueadoParaUsuario) {
         avisoBloqueio.classList.remove('hidden');
         textoMotivo.textContent = statusBloqueio.motivo;
-        aplicarBloqueioFormulario(true);
+        aplicarBloqueioFormulario(true, statusBloqueio.liberarPosEvento);
       } else {
         avisoBloqueio.classList.add('hidden');
-        aplicarBloqueioFormulario(false);
+        aplicarBloqueioFormulario(false, true);
       }
 
       // Ações exclusivas do Coordenador na ficha
@@ -1340,8 +1393,34 @@
       if (!eventoSelecionado) return;
 
       const statusBloqueio = verificarStatusBloqueioEvento(eventoSelecionado);
-      if (statusBloqueio.bloqueadoParaUsuario) {
+      if (statusBloqueio.bloqueadoParaUsuario && !statusBloqueio.liberarPosEvento) {
         alert(statusBloqueio.motivo);
+        return;
+      }
+
+      // Se a data já passou (bloqueio parcial), atualiza apenas os links de Fotos e Vídeos
+      if (statusBloqueio.bloqueadoParaUsuario && statusBloqueio.liberarPosEvento) {
+        const btn = document.getElementById('btn-salvar-ficha');
+        btn.disabled = true;
+        btn.textContent = 'Salvando...';
+
+        const { error } = await db.from('eventos').update({
+          link_fotos: document.getElementById('input-link-fotos').value.trim(),
+          link_videos: document.getElementById('input-link-videos').value.trim(),
+          atualizado_em: new Date().toISOString()
+        }).eq('id', eventoSelecionado.id);
+
+        btn.disabled = false;
+        btn.textContent = '💾 Salvar Informações no Mural';
+
+        if (error) {
+          mostrarAviso('Erro ao salvar links pós-evento: ' + error.message, 'erro');
+          return;
+        }
+
+        await carregarEventos();
+        abrirPaginaEvento(eventoSelecionado.id);
+        mostrarAviso('Links de fotos e vídeos atualizados com sucesso!', 'sucesso');
         return;
       }
 
@@ -1505,6 +1584,96 @@
 
       document.getElementById('barra-coordenador').classList.toggle('hidden', !modoCoordenador);
       renderizarCalendario();
+    }
+
+
+    // =========================================================================
+    // ALTERAÇÃO DE SENHA DO COORDENADOR LOGADO
+    // =========================================================================
+    function abrirModalAlterarSenha() {
+      if (!modoCoordenador || !coordenadorAtual) return;
+      document.getElementById('alterar-senha-usuario-label').textContent = `${coordenadorAtual.nome || coordenadorAtual.login} (${coordenadorAtual.login})`;
+      document.getElementById('senha-atual-coord').value = '';
+      document.getElementById('nova-senha-coord').value = '';
+      document.getElementById('confirmar-nova-senha-coord').value = '';
+      document.getElementById('erro-alterar-senha').classList.add('hidden');
+      document.getElementById('modal-alterar-senha').classList.remove('hidden');
+      setTimeout(() => document.getElementById('senha-atual-coord').focus(), 50);
+    }
+
+    function fecharModalAlterarSenha() {
+      document.getElementById('modal-alterar-senha').classList.add('hidden');
+    }
+
+    async function salvarNovaSenhaCoordenador(e) {
+      e.preventDefault();
+      if (!modoCoordenador || !coordenadorAtual) return;
+
+      const senhaAtual = document.getElementById('senha-atual-coord').value;
+      const novaSenha = document.getElementById('nova-senha-coord').value.trim();
+      const confirmarSenha = document.getElementById('confirmar-nova-senha-coord').value.trim();
+      const erroEl = document.getElementById('erro-alterar-senha');
+      const btn = document.getElementById('btn-salvar-nova-senha');
+
+      erroEl.classList.add('hidden');
+
+      if (novaSenha.length < 4) {
+        erroEl.textContent = 'A nova senha deve ter pelo menos 4 caracteres.';
+        erroEl.classList.remove('hidden');
+        return;
+      }
+
+      if (novaSenha !== confirmarSenha) {
+        erroEl.textContent = 'A confirmação da nova senha não confere.';
+        erroEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = 'Verificando...';
+
+      // Confirma se a senha atual está correta no banco antes de atualizar
+      const { data: verificado, error: erroVerif } = await db
+        .from('coordenadores')
+        .select('id')
+        .eq('id', coordenadorAtual.id)
+        .eq('senha', senhaAtual)
+        .maybeSingle();
+
+      if (erroVerif) {
+        btn.disabled = false;
+        btn.textContent = 'Salvar Senha';
+        erroEl.textContent = 'Erro ao verificar senha atual: ' + erroVerif.message;
+        erroEl.classList.remove('hidden');
+        return;
+      }
+
+      if (!verificado) {
+        btn.disabled = false;
+        btn.textContent = 'Salvar Senha';
+        erroEl.textContent = 'A senha atual informada está incorreta.';
+        erroEl.classList.remove('hidden');
+        return;
+      }
+
+      btn.textContent = 'Salvando...';
+
+      const { error: erroUpdate } = await db
+        .from('coordenadores')
+        .update({ senha: novaSenha })
+        .eq('id', coordenadorAtual.id);
+
+      btn.disabled = false;
+      btn.textContent = 'Salvar Senha';
+
+      if (erroUpdate) {
+        erroEl.textContent = 'Erro ao atualizar a senha: ' + erroUpdate.message;
+        erroEl.classList.remove('hidden');
+        return;
+      }
+
+      fecharModalAlterarSenha();
+      mostrarAviso('Sua senha foi alterada com sucesso! Use a nova senha no próximo acesso.', 'sucesso');
     }
 
     // =========================================================================
