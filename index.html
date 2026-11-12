@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agenda Ministerial — Igreja Batista Betel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            betel: {
+              vinho: '#582121',
+              vinhoEscuro: '#3E1515',
+              dourado: '#FFE1B2',
+              douradoEscuro: '#D9A760',
+              creme: '#FFFBF5'
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            serif: ['Playfair Display', 'serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #FFFBF5; color: #2D1A1A; }
+    .calendar-cell { min-height: 110px; transition: all 0.15s ease; }
+    @media (max-width: 640px) { .calendar-cell { min-height: 82px; } }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Cabeçalho Institucional -->
+  <header class="bg-betel-vinho text-betel-dourado shadow-md sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3 cursor-pointer" onclick="voltarParaCalendario()">
+        <div class="w-10 h-10 rounded-full bg-betel-dourado text-betel-vinho flex items-center justify-center font-serif font-bold text-xl shadow">
+          B
+        </div>
+        <div>
+          <h1 class="font-serif text-lg sm:text-xl font-bold tracking-wide leading-tight">Igreja Batista Betel</h1>
+          <p class="text-xs text-betel-dourado/80">Agenda Ministerial &amp; Ficha de Eventos</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="btn-modo-coord" onclick="alternarModoCoordenador()"
+          class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold border border-betel-dourado/50 text-betel-dourado hover:bg-betel-vinhoEscuro transition">
+          🔒 Modo Coordenador
+        </button>
+        <button onclick="gerarPDFInterativo()"
+          class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-betel-dourado text-betel-vinho hover:bg-white shadow transition flex items-center gap-1.5">
+          <span>📄</span> Baixar PDF Interativo
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Barra de Alerta do Modo Coordenador -->
+  <div id="barra-coordenador" class="hidden bg-amber-100 border-b border-amber-300 text-amber-950 px-4 py-2.5 text-xs sm:text-sm">
+    <div class="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <span><strong>Modo Coordenador Ativo:</strong> Você pode criar novos eventos, alterar datas ou excluir compromissos.</span>
+      <button onclick="abrirModalNovoEvento()"
+        class="bg-betel-vinho text-betel-dourado px-3 py-1 rounded-md font-semibold hover:bg-betel-vinhoEscuro transition">
+        + Novo Evento
+      </button>
+    </div>
+  </div>
+
+  <!-- Conteúdo Principal -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6">
+
+    <!-- Status de Carregamento / Erro -->
+    <div id="status-banner" class="hidden mb-4 p-3 rounded-lg text-sm font-medium"></div>
+
+    <!-- TELA 1: CALENDÁRIO MENSAL -->
+    <section id="tela-calendario">
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-5 bg-white p-4 rounded-xl shadow-sm border border-stone-200">
+        <div class="flex items-center gap-2">
+          <button onclick="mudarMes(-1)" class="p-2 rounded-lg hover:bg-stone-100 text-betel-vinho font-bold" title="Mês anterior">◀</button>
+          <h2 id="titulo-mes-ano" class="font-serif text-xl sm:text-2xl font-bold text-betel-vinho min-w-[200px] text-center capitalize">
+            Fevereiro 2027
+          </h2>
+          <button onclick="mudarMes(1)" class="p-2 rounded-lg hover:bg-stone-100 text-betel-vinho font-bold" title="Próximo mês">▶</button>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs text-stone-600">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-sm bg-betel-vinho inline-block"></span> Evento (clique para preencher/ver)
+          </span>
+          <button onclick="irParaDataInicial()" class="text-betel-vinho underline font-medium hover:text-betel-vinhoEscuro">
+            Ir para Fev/2027
+          </button>
+        </div>
+      </div>
+
+      <!-- Grade do Calendário -->
+      <div class="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+        <div class="grid grid-cols-7 bg-betel-vinho text-betel-dourado text-center text-xs sm:text-sm font-semibold py-2.5">
+          <div>Dom</div>
+          <div>Seg</div>
+          <div>Ter</div>
+          <div>Qua</div>
+          <div>Qui</div>
+          <div>Sex</div>
+          <div>Sáb</div>
+        </div>
+        <div id="grade-dias" class="grid grid-cols-7 divide-x divide-y divide-stone-200"></div>
+      </div>
+
+      <!-- Lista Resumida do Mês -->
+      <div class="mt-6 bg-white p-5 rounded-xl shadow-sm border border-stone-200">
+        <h3 class="font-serif text-lg font-bold text-betel-vinho mb-3">Eventos Programados neste Mês</h3>
+        <div id="lista-eventos-mes" class="space-y-2"></div>
+      </div>
+    </section>
+
+    <!-- TELA 2: PÁGINA DO EVENTO (FORMULÁRIO DO LÍDER + MURAL PÚBLICO) -->
+    <section id="tela-evento" class="hidden">
+      <button onclick="voltarParaCalendario()"
+        class="mb-4 inline-flex items-center gap-1.5 text-sm font-semibold text-betel-vinho hover:underline">
+        ← Voltar para o Calendário
+      </button>
+
+      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <!-- Coluna Esquerda: Mural Público Atual (Visível para Todos) -->
+        <div class="lg:col-span-2 bg-betel-vinho text-betel-dourado p-6 rounded-2xl shadow-md flex flex-col justify-between">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-betel-dourado/20 text-betel-dourado text-xs font-semibold uppercase tracking-wider mb-3">
+              Ficha Oficial do Evento
+            </span>
+            <h2 id="detalhe-titulo" class="font-serif text-2xl sm:text-3xl font-bold text-white mb-2">
+              Nome do Evento
+            </h2>
+            <p id="detalhe-data-extenso" class="text-sm text-betel-dourado/90 font-medium mb-6 pb-4 border-b border-betel-dourado/20">
+              Data do Evento
+            </p>
+
+            <div class="space-y-4 text-sm">
+              <div>
+                <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Ministério / Área</span>
+                <p id="mural-ministerio" class="font-semibold text-white text-base">—</p>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Líder Responsável</span>
+                <p id="mural-lider" class="font-semibold text-white text-base">—</p>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Horário</span>
+                  <p id="mural-horario" class="font-semibold text-white">—</p>
+                </div>
+                <div>
+                  <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Local</span>
+                  <p id="mural-local" class="font-semibold text-white">—</p>
+                </div>
+              </div>
+              <div>
+                <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Observações &amp; Escala</span>
+                <p id="mural-observacoes" class="text-betel-dourado/95 whitespace-pre-line bg-betel-vinhoEscuro/60 p-3 rounded-lg mt-1">
+                  Nenhuma observação registrada ainda.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-betel-dourado/20 flex items-center justify-between text-xs text-betel-dourado/75">
+            <span id="mural-atualizado">Sincronizado com a nuvem</span>
+            <button onclick="copiarLinkEvento()" class="underline hover:text-white font-medium">
+              Copiar link direto
+            </button>
+          </div>
+        </div>
+
+        <!-- Coluna Direita: Formulário de Preenchimento pelo Líder -->
+        <div class="lg:col-span-3 bg-white p-6 rounded-2xl shadow-sm border border-stone-200">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-serif text-xl font-bold text-betel-vinho">Preencher / Atualizar Informações</h3>
+              <p class="text-xs text-stone-500">As alterações salvas aqui ficam imediatamente visíveis para toda a liderança.</p>
+            </div>
+            <div id="acoes-coord-evento" class="hidden flex gap-2">
+              <button onclick="abrirModalEditarEvento()" class="text-xs bg-amber-100 text-amber-900 px-3 py-1.5 rounded-lg font-semibold hover:bg-amber-200">
+                ✏️ Mudar Data/Nome
+              </button>
+              <button onclick="excluirEventoAtual()" class="text-xs bg-red-100 text-red-800 px-3 py-1.5 rounded-lg font-semibold hover:bg-red-200">
+                🗑️ Excluir
+              </button>
+            </div>
+          </div>
+
+          <form id="form-lider" onsubmit="salvarFichaLider(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Nome do Líder Responsável *</label>
+                <input type="text" id="input-lider" required placeholder="Ex: Pr. Carlos / Ana Paula"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Ministério / Departamento *</label>
+                <input type="text" id="input-ministerio" required placeholder="Ex: Louvor e Adoração"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Horário de Início / Término *</label>
+                <input type="text" id="input-horario" required placeholder="Ex: 19h00 às 22h00"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-stone-700 mb-1">Local do Evento *</label>
+                <input type="text" id="input-local" required placeholder="Ex: Templo Principal / Chácara Betel"
+                  class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-stone-700 mb-1">Detalhes, Escala, Equipamentos e Observações</label>
+              <textarea id="input-observacoes" rows="5"
+                placeholder="Informe repertório, equipe escalada, necessidade de som/mídia, alimentação ou avisos importantes..."
+                class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm"></textarea>
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-3">
+              <button type="submit" id="btn-salvar-ficha"
+                class="w-full sm:w-auto px-6 py-3 rounded-xl bg-betel-vinho text-betel-dourado font-bold text-sm hover:bg-betel-vinhoEscuro shadow transition">
+                💾 Salvar Informações no Mural
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- MODAL DO COORDENADOR (CRIAR / MOVER DATA DE EVENTO) -->
+  <div id="modal-coord" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
+      <h3 id="modal-coord-titulo" class="font-serif text-xl font-bold text-betel-vinho mb-4">Novo Evento no Calendário</h3>
+      <form onsubmit="salvarEventoCoordenador(event)" class="space-y-4">
+        <input type="hidden" id="coord-evento-id" />
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Título do Evento *</label>
+          <input type="text" id="coord-titulo" required placeholder="Ex: ACAMPADENTRO"
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Data do Evento *</label>
+          <input type="date" id="coord-data" required
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-stone-700 mb-1">Ministério Inicial (Opcional)</label>
+          <input type="text" id="coord-ministerio" placeholder="Ex: Louvor / Jovens"
+            class="w-full px-3.5 py-2 rounded-lg border border-stone-300 text-sm focus:outline-none focus:border-betel-vinho" />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="fecharModalCoord()" class="px-4 py-2 rounded-lg text-sm text-stone-600 hover:bg-stone-100">
+            Cancelar
+          </button>
+          <button type="submit" class="px-5 py-2 rounded-lg text-sm font-bold bg-betel-vinho text-betel-dourado hover:bg-betel-vinhoEscuro">
+            Salvar no Calendário
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="text-center text-xs text-stone-500 py-5 border-t border-stone-200 mt-8">
+    Igreja Batista Betel • Sistema Integrado de Calendário Ministerial e PDF Interativo
+  </footer>
+
+  <script>
+    // =========================================================================
+    // CONFIGURAÇÃO DO SUPABASE (JÁ CONECTADO AO SEU PROJETO)
+    // =========================================================================
+    const SUPABASE_URL = 'https://vucinpcbgtwulsahuojl.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_8-jx5FkDH6DkWOJSsq6saA_1MAlCAss';
+    const SENHA_COORDENADOR = 'betel2027';
+
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Estado da Aplicação
+    let eventos = [];
+    let anoAtual = 2027;
+    let mesAtual = 1; // 0 = Janeiro, 1 = Fevereiro
+    let modoCoordenador = false;
+    let eventoSelecionado = null;
+
+    const NOMES_MESES = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ];
+
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', async () => {
+      await carregarEventos();
+
+      // Verifica se o link veio de um clique no PDF (?evento=ID)
+      const params = new URLSearchParams(window.location.search);
+      const eventoIdParam = params.get('evento');
+      if (eventoIdParam) {
+        const encontrado = eventos.find(e => String(e.id) === String(eventoIdParam));
+        if (encontrado) {
+          const [ano, mes] = encontrado.data.split('-').map(Number);
+          anoAtual = ano;
+          mesAtual = mes - 1;
+          renderizarCalendario();
+          abrirPaginaEvento(encontrado.id);
+          return;
+        }
+      }
+      renderizarCalendario();
+    });
+
+    function mostrarAviso(texto, tipo = 'info') {
+      const el = document.getElementById('status-banner');
+      el.classList.remove('hidden', 'bg-red-100', 'text-red-800', 'bg-emerald-100', 'text-emerald-800', 'bg-amber-100', 'text-amber-800');
+      if (tipo === 'erro') el.classList.add('bg-red-100', 'text-red-800');
+      else if (tipo === 'sucesso') el.classList.add('bg-emerald-100', 'text-emerald-800');
+      else el.classList.add('bg-amber-100', 'text-amber-800');
+      el.textContent = texto;
+      if (tipo === 'sucesso') {
+        setTimeout(() => el.classList.add('hidden'), 4000);
+      }
+    }
+
+    async function carregarEventos() {
+      const { data, error } = await db
+        .from('eventos')
+        .select('*')
+        .order('data', { ascending: true });
+
+      if (error) {
+        console.error(error);
+        mostrarAviso('Erro ao conectar com o banco de dados: ' + error.message, 'erro');
+        return;
+      }
+      eventos = data || [];
+    }
+
+    function mudarMes(delta) {
+      mesAtual += delta;
+      if (mesAtual < 0) { mesAtual = 11; anoAtual--; }
+      if (mesAtual > 11) { mesAtual = 0; anoAtual++; }
+      renderizarCalendario();
+    }
+
+    function irParaDataInicial() {
+      anoAtual = 2027;
+      mesAtual = 1;
+      renderizarCalendario();
+    }
+
+    function renderizarCalendario() {
+      document.getElementById('titulo-mes-ano').textContent = `${NOMES_MESES[mesAtual]} ${anoAtual}`;
+      const grade = document.getElementById('grade-dias');
+      grade.innerHTML = '';
+
+      const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
+      const totalDiasMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+
+      // Células vazias antes do dia 1
+      for (let i = 0; i < primeiroDiaSemana; i++) {
+        const vazia = document.createElement('div');
+        vazia.className = 'calendar-cell bg-stone-50/70 p-2';
+        grade.appendChild(vazia);
+      }
+
+      const mesStr = String(mesAtual + 1).padStart(2, '0');
+      const eventosDoMes = [];
+
+      for (let dia = 1; dia <= totalDiasMes; dia++) {
+        const diaStr = String(dia).padStart(2, '0');
+        const dataISO = `${anoAtual}-${mesStr}-${diaStr}`;
+        const eventosDia = eventos.filter(e => e.data === dataISO);
+        eventosDoMes.push(...eventosDia);
+
+        const celula = document.createElement('div');
+        celula.className = 'calendar-cell p-1.5 sm:p-2 flex flex-col justify-between bg-white hover:bg-betel-creme';
+
+        const topo = document.createElement('div');
+        topo.className = 'flex items-center justify-between';
+        topo.innerHTML = `<span class="text-xs sm:text-sm font-bold ${eventosDia.length ? 'text-betel-vinho' : 'text-stone-500'}">${dia}</span>`;
+
+        if (modoCoordenador) {
+          const btnAdd = document.createElement('button');
+          btnAdd.textContent = '+';
+          btnAdd.title = 'Adicionar evento neste dia';
+          btnAdd.className = 'text-xs px-1.5 py-0.5 rounded bg-stone-200 hover:bg-betel-vinho hover:text-white font-bold';
+          btnAdd.onclick = () => abrirModalNovoEvento(dataISO);
+          topo.appendChild(btnAdd);
+        }
+
+        celula.appendChild(topo);
+
+        const listaPills = document.createElement('div');
+        listaPills.className = 'mt-1 space-y-1';
+
+        eventosDia.forEach(ev => {
+          const pill = document.createElement('button');
+          pill.className = 'w-full text-left px-2 py-1 rounded bg-betel-vinho text-betel-dourado text-[11px] sm:text-xs font-semibold leading-tight hover:bg-betel-vinhoEscuro shadow-sm transition truncate block';
+          pill.textContent = ev.titulo;
+          pill.title = `${ev.titulo} — Clique para abrir e preencher`;
+          pill.onclick = () => abrirPaginaEvento(ev.id);
+          listaPills.appendChild(pill);
+        });
+
+        celula.appendChild(listaPills);
+        grade.appendChild(celula);
+      }
+
+      // Lista resumida abaixo do calendário
+      const listaEl = document.getElementById('lista-eventos-mes');
+      if (eventosDoMes.length === 0) {
+        listaEl.innerHTML = `<p class="text-sm text-stone-500">Nenhum evento cadastrado para ${NOMES_MESES[mesAtual]} de ${anoAtual}.</p>`;
+      } else {
+        listaEl.innerHTML = eventosDoMes.map(ev => {
+          const [a, m, d] = ev.data.split('-');
+          const statusPreenchido = ev.lider && ev.lider.trim() !== ''
+            ? `<span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Líder: ${ev.lider}</span>`
+            : `<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Aguardando líder preencher</span>`;
+
+          return `
+            <div onclick="abrirPaginaEvento(${ev.id})"
+              class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-stone-200 hover:border-betel-vinho cursor-pointer transition bg-betel-creme/50">
+              <div class="flex items-center gap-3">
+                <span class="px-2.5 py-1 rounded-md bg-betel-vinho text-betel-dourado font-bold text-xs">${d}/${m}</span>
+                <div>
+                  <p class="font-bold text-sm text-betel-vinho">${ev.titulo}</p>
+                  <p class="text-xs text-stone-500">${ev.ministerio || 'Ministério não definido'} ${ev.horario ? '• ' + ev.horario : ''}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                ${statusPreenchido}
+                <span class="text-xs font-semibold text-betel-vinho">Abrir →</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    // Navegação para a Página do Evento
+    function abrirPaginaEvento(id) {
+      const ev = eventos.find(e => String(e.id) === String(id));
+      if (!ev) return;
+      eventoSelecionado = ev;
+
+      // Atualiza URL sem recarregar (facilita compartilhar link direto)
+      const url = new URL(window.location);
+      url.searchParams.set('evento', ev.id);
+      window.history.pushState({}, '', url);
+
+      const [ano, mes, dia] = ev.data.split('-');
+      document.getElementById('detalhe-titulo').textContent = ev.titulo;
+      document.getElementById('detalhe-data-extenso').textContent = `Data: ${dia}/${mes}/${ano}`;
+
+      document.getElementById('mural-ministerio').textContent = ev.ministerio || 'Não informado';
+      document.getElementById('mural-lider').textContent = ev.lider || 'Aguardando preenchimento';
+      document.getElementById('mural-horario').textContent = ev.horario || 'A definir';
+      document.getElementById('mural-local').textContent = ev.local || 'A definir';
+      document.getElementById('mural-observacoes').textContent = ev.observacoes || 'Nenhuma observação registrada ainda.';
+
+      // Preenche campos do formulário
+      document.getElementById('input-lider').value = ev.lider || '';
+      document.getElementById('input-ministerio').value = ev.ministerio || '';
+      document.getElementById('input-horario').value = ev.horario || '';
+      document.getElementById('input-local').value = ev.local || '';
+      document.getElementById('input-observacoes').value = ev.observacoes || '';
+
+      document.getElementById('acoes-coord-evento').classList.toggle('hidden', !modoCoordenador);
+
+      document.getElementById('tela-calendario').classList.add('hidden');
+      document.getElementById('tela-evento').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function voltarParaCalendario() {
+      eventoSelecionado = null;
+      const url = new URL(window.location);
+      url.searchParams.delete('evento');
+      window.history.pushState({}, '', url);
+
+      document.getElementById('tela-evento').classList.add('hidden');
+      document.getElementById('tela-calendario').classList.remove('hidden');
+      renderizarCalendario();
+    }
+
+    async function salvarFichaLider(e) {
+      e.preventDefault();
+      if (!eventoSelecionado) return;
+
+      const btn = document.getElementById('btn-salvar-ficha');
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+
+      const atualizacao = {
+        lider: document.getElementById('input-lider').value.trim(),
+        ministerio: document.getElementById('input-ministerio').value.trim(),
+        horario: document.getElementById('input-horario').value.trim(),
+        local: document.getElementById('input-local').value.trim(),
+        observacoes: document.getElementById('input-observacoes').value.trim(),
+        atualizado_em: new Date().toISOString()
+      };
+
+      const { error } = await db
+        .from('eventos')
+        .update(atualizacao)
+        .eq('id', eventoSelecionado.id);
+
+      btn.disabled = false;
+      btn.textContent = '💾 Salvar Informações no Mural';
+
+      if (error) {
+        mostrarAviso('Erro ao salvar: ' + error.message, 'erro');
+        return;
+      }
+
+      await carregarEventos();
+      abrirPaginaEvento(eventoSelecionado.id);
+      mostrarAviso('Informações salvas com sucesso! Todos já podem visualizar.', 'sucesso');
+    }
+
+    function copiarLinkEvento() {
+      navigator.clipboard.writeText(window.location.href);
+      mostrarAviso('Link direto deste evento copiado para a área de transferência!', 'sucesso');
+    }
+
+    // =========================================================================
+    // FUNÇÕES DO MODO COORDENADOR (EDITAR CALENDÁRIO / DATAS)
+    // =========================================================================
+    function alternarModoCoordenador() {
+      if (!modoCoordenador) {
+        const senha = prompt('Digite a senha do Coordenador (padrão: betel2027):');
+        if (senha !== SENHA_COORDENADOR) {
+          alert('Senha incorreta.');
+          return;
+        }
+        modoCoordenador = true;
+      } else {
+        modoCoordenador = false;
+      }
+
+      const btn = document.getElementById('btn-modo-coord');
+      btn.textContent = modoCoordenador ? '🔓 Sair do Modo Coordenador' : '🔒 Modo Coordenador';
+      document.getElementById('barra-coordenador').classList.toggle('hidden', !modoCoordenador);
+      if (eventoSelecionado) {
+        document.getElementById('acoes-coord-evento').classList.toggle('hidden', !modoCoordenador);
+      }
+      renderizarCalendario();
+    }
+
+    function abrirModalNovoEvento(dataPadrao = '') {
+      document.getElementById('modal-coord-titulo').textContent = 'Novo Evento no Calendário';
+      document.getElementById('coord-evento-id').value = '';
+      document.getElementById('coord-titulo').value = '';
+      document.getElementById('coord-data').value = dataPadrao || `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}-01`;
+      document.getElementById('coord-ministerio').value = '';
+      document.getElementById('modal-coord').classList.remove('hidden');
+    }
+
+    function abrirModalEditarEvento() {
+      if (!eventoSelecionado) return;
+      document.getElementById('modal-coord-titulo').textContent = 'Alterar Data ou Nome do Evento';
+      document.getElementById('coord-evento-id').value = eventoSelecionado.id;
+      document.getElementById('coord-titulo').value = eventoSelecionado.titulo;
+      document.getElementById('coord-data').value = eventoSelecionado.data;
+      document.getElementById('coord-ministerio').value = eventoSelecionado.ministerio || '';
+      document.getElementById('modal-coord').classList.remove('hidden');
+    }
+
+    function fecharModalCoord() {
+      document.getElementById('modal-coord').classList.add('hidden');
+    }
+
+    async function salvarEventoCoordenador(e) {
+      e.preventDefault();
+      const id = document.getElementById('coord-evento-id').value;
+      const payload = {
+        titulo: document.getElementById('coord-titulo').value.trim().toUpperCase(),
+        data: document.getElementById('coord-data').value,
+        ministerio: document.getElementById('coord-ministerio').value.trim()
+      };
+
+      let error;
+      if (id) {
+        ({ error } = await db.from('eventos').update(payload).eq('id', id));
+      } else {
+        ({ error } = await db.from('eventos').insert([payload]));
+      }
+
+      if (error) {
+        mostrarAviso('Erro ao salvar evento: ' + error.message, 'erro');
+        return;
+      }
+
+      fecharModalCoord();
+      await carregarEventos();
+      if (id && eventoSelecionado) {
+        abrirPaginaEvento(id);
+      } else {
+        renderizarCalendario();
+      }
+      mostrarAviso('Calendário atualizado! Lembre-se de baixar o novo PDF se houve mudança de data.', 'sucesso');
+    }
+
+    async function excluirEventoAtual() {
+      if (!eventoSelecionado) return;
+      if (!confirm(`Tem certeza que deseja excluir o evento "${eventoSelecionado.titulo}"?`)) return;
+
+      const { error } = await db.from('eventos').delete().eq('id', eventoSelecionado.id);
+      if (error) {
+        mostrarAviso('Erro ao excluir: ' + error.message, 'erro');
+        return;
+      }
+
+      await carregarEventos();
+      voltarParaCalendario();
+      mostrarAviso('Evento removido do calendário.', 'sucesso');
+    }
+
+    // =========================================================================
+    // GERADOR DE PDF INTERATIVO COM LINKS REAIS PARA CADA EVENTO
+    // =========================================================================
+    function gerarPDFInterativo() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const baseUrl = window.location.origin + window.location.pathname;
+
+      // Cabeçalho Vinho (#582121)
+      doc.setFillColor(88, 33, 33);
+      doc.rect(0, 0, 297, 26, 'F');
+
+      doc.setTextColor(255, 225, 178); // Dourado (#FFE1B2)
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(16);
+      doc.text('IGREJA BATISTA BETEL', 14, 11);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.text('Calendário Ministerial Interativo — Clique sobre o evento para abrir e preencher a ficha', 14, 18);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(15);
+      doc.text(`${NOMES_MESES[mesAtual].toUpperCase()} ${anoAtual}`, 283, 15, { align: 'right' });
+
+      // Dias da semana
+      const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+      const margemX = 14;
+      const topoGrade = 32;
+      const larguraCol = (297 - 28) / 7;
+      const alturaCabecalhoDias = 8;
+
+      doc.setFillColor(62, 21, 21);
+      doc.rect(margemX, topoGrade, 297 - 28, alturaCabecalhoDias, 'F');
+      doc.setTextColor(255, 225, 178);
+      doc.setFontSize(8.5);
+      diasSemana.forEach((dia, idx) => {
+        doc.text(dia, margemX + idx * larguraCol + larguraCol / 2, topoGrade + 5.5, { align: 'center' });
+      });
+
+      // Grade de dias
+      const primeiroDia = new Date(anoAtual, mesAtual, 1).getDay();
+      const totalDias = new Date(anoAtual, mesAtual + 1, 0).getDate();
+      const totalCelulas = Math.ceil((primeiroDia + totalDias) / 7) * 7;
+      const numLinhas = totalCelulas / 7;
+      const alturaCelula = (195 - (topoGrade + alturaCabecalhoDias)) / numLinhas;
+      const mesStr = String(mesAtual + 1).padStart(2, '0');
+
+      let diaContador = 1;
+      for (let i = 0; i < totalCelulas; i++) {
+        const col = i % 7;
+        const row = Math.floor(i / 7);
+        const x = margemX + col * larguraCol;
+        const y = topoGrade + alturaCabecalhoDias + row * alturaCelula;
+
+        doc.setDrawColor(210, 200, 195);
+        doc.setFillColor(255, 253, 250);
+        doc.rect(x, y, larguraCol, alturaCelula, 'FD');
+
+        if (i >= primeiroDia && diaContador <= totalDias) {
+          const diaStr = String(diaContador).padStart(2, '0');
+          const dataISO = `${anoAtual}-${mesStr}-${diaStr}`;
+          const eventosDia = eventos.filter(e => e.data === dataISO);
+
+          doc.setTextColor(88, 33, 33);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.5);
+          doc.text(String(diaContador), x + 2.5, y + 5.5);
+
+          let offsetY = y + 8;
+          eventosDia.forEach(ev => {
+            const boxH = 7.5;
+            if (offsetY + boxH <= y + alturaCelula - 1) {
+              // Caixa clicável do evento
+              doc.setFillColor(88, 33, 33);
+              doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1.2, 1.2, 'F');
+
+              doc.setTextColor(255, 225, 178);
+              doc.setFont('helvetica', 'bold');
+              doc.setFontSize(7.2);
+              const tituloCortado = ev.titulo.length > 18 ? ev.titulo.substring(0, 17) + '…' : ev.titulo;
+              doc.text(tituloCortado, x + 2.8, offsetY + 5);
+
+              // Link interativo real apontando para a página do evento no Render
+              const linkEvento = `${baseUrl}?evento=${ev.id}`;
+              doc.link(x + 1.5, offsetY, larguraCol - 3, boxH, { url: linkEvento });
+
+              offsetY += boxH + 1.5;
+            }
+          });
+
+          diaContador++;
+        }
+      }
+
+      // Rodapé
+      doc.setTextColor(120, 110, 110);
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.text(`Gerado em ${new Date().toLocaleDateString('pt-BR')} • Link do sistema: ${baseUrl}`, 14, 203);
+
+      doc.save(`Calendario_Betel_${NOMES_MESES[mesAtual]}_${anoAtual}.pdf`);
+    }
+  </script>
+</body>
+</html>
