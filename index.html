@@ -1003,8 +1003,8 @@
       if (trancadoManual) {
         return {
           bloqueadoParaUsuario: true,
-          liberarPosEvento: false,
-          motivo: 'Esta ficha foi trancada manualmente pela coordenação (inclusive o registro pós-evento).'
+          liberarPosEvento: true,
+          motivo: 'Esta ficha foi trancada pela coordenação. Os dados de planejamento estão bloqueados, mas os campos de Fotos e Vídeos permanecem liberados para registro pós-evento.'
         };
       }
 
