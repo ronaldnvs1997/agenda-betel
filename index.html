@@ -163,6 +163,26 @@
                   <p id="mural-local" class="font-semibold text-white">—</p>
                 </div>
               </div>
+
+              <!-- Equipes de Apoio Solicitadas -->
+              <div class="bg-betel-vinhoEscuro/60 p-3.5 rounded-xl border border-betel-dourado/15">
+                <span class="block text-xs uppercase tracking-wider text-betel-dourado/70 mb-2">Equipes de Apoio Solicitadas</span>
+                <div class="grid grid-cols-3 gap-2 text-center">
+                  <div class="bg-betel-vinho/80 p-2 rounded-lg">
+                    <span class="block text-[11px] text-betel-dourado/75">Mídia</span>
+                    <span id="mural-midia" class="font-bold text-white text-xs">—</span>
+                  </div>
+                  <div class="bg-betel-vinho/80 p-2 rounded-lg">
+                    <span class="block text-[11px] text-betel-dourado/75">Louvor</span>
+                    <span id="mural-louvor" class="font-bold text-white text-xs">—</span>
+                  </div>
+                  <div class="bg-betel-vinho/80 p-2 rounded-lg">
+                    <span class="block text-[11px] text-betel-dourado/75">Diaconia</span>
+                    <span id="mural-diaconia" class="font-bold text-white text-xs">—</span>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Observações &amp; Escala</span>
                 <p id="mural-observacoes" class="text-betel-dourado/95 whitespace-pre-line bg-betel-vinhoEscuro/60 p-3 rounded-lg mt-1">
@@ -224,10 +244,44 @@
               </div>
             </div>
 
+            <!-- 3 Novas Perguntas de Necessidade de Equipes -->
+            <div class="p-4 rounded-xl bg-betel-creme border border-stone-200 space-y-3">
+              <p class="text-xs font-bold uppercase tracking-wider text-betel-vinho">Solicitação de Equipes de Apoio</p>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Necessita de Mídia? *</label>
+                  <select id="input-midia" required
+                    class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                    <option value="">Selecione...</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Necessita de Equipe de Louvor? *</label>
+                  <select id="input-louvor" required
+                    class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                    <option value="">Selecione...</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Necessita de Diaconia? *</label>
+                  <select id="input-diaconia" required
+                    class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                    <option value="">Selecione...</option>
+                    <option value="Sim">Sim</option>
+                    <option value="Não">Não</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
             <div>
               <label class="block text-xs font-semibold text-stone-700 mb-1">Detalhes, Escala, Equipamentos e Observações</label>
-              <textarea id="input-observacoes" rows="5"
-                placeholder="Informe repertório, equipe escalada, necessidade de som/mídia, alimentação ou avisos importantes..."
+              <textarea id="input-observacoes" rows="4"
+                placeholder="Informe repertório, equipe escalada, necessidade específica de som/mídia, recepção ou avisos importantes..."
                 class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm"></textarea>
             </div>
 
@@ -431,6 +485,16 @@
             ? `<span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">Líder: ${ev.lider}</span>`
             : `<span class="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">Aguardando líder preencher</span>`;
 
+          const badgesApoio = [
+            ev.necessita_midia === 'Sim' ? 'Mídia' : '',
+            ev.necessita_louvor === 'Sim' ? 'Louvor' : '',
+            ev.necessita_diaconia === 'Sim' ? 'Diaconia' : ''
+          ].filter(Boolean);
+
+          const textoApoio = badgesApoio.length
+            ? `<span class="text-[11px] text-betel-vinho font-medium">• Apoio: ${badgesApoio.join(', ')}</span>`
+            : '';
+
           return `
             <div onclick="abrirPaginaEvento(${ev.id})"
               class="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-stone-200 hover:border-betel-vinho cursor-pointer transition bg-betel-creme/50">
@@ -438,7 +502,7 @@
                 <span class="px-2.5 py-1 rounded-md bg-betel-vinho text-betel-dourado font-bold text-xs">${d}/${m}</span>
                 <div>
                   <p class="font-bold text-sm text-betel-vinho">${ev.titulo}</p>
-                  <p class="text-xs text-stone-500">${ev.ministerio || 'Ministério não definido'} ${ev.horario ? '• ' + ev.horario : ''}</p>
+                  <p class="text-xs text-stone-500">${ev.ministerio || 'Ministério não definido'} ${ev.horario ? '• ' + ev.horario : ''} ${textoApoio}</p>
                 </div>
               </div>
               <div class="flex items-center gap-2">
@@ -470,6 +534,11 @@
       document.getElementById('mural-lider').textContent = ev.lider || 'Aguardando preenchimento';
       document.getElementById('mural-horario').textContent = ev.horario || 'A definir';
       document.getElementById('mural-local').textContent = ev.local || 'A definir';
+
+      document.getElementById('mural-midia').textContent = ev.necessita_midia || '—';
+      document.getElementById('mural-louvor').textContent = ev.necessita_louvor || '—';
+      document.getElementById('mural-diaconia').textContent = ev.necessita_diaconia || '—';
+
       document.getElementById('mural-observacoes').textContent = ev.observacoes || 'Nenhuma observação registrada ainda.';
 
       // Preenche campos do formulário
@@ -477,6 +546,9 @@
       document.getElementById('input-ministerio').value = ev.ministerio || '';
       document.getElementById('input-horario').value = ev.horario || '';
       document.getElementById('input-local').value = ev.local || '';
+      document.getElementById('input-midia').value = ev.necessita_midia || '';
+      document.getElementById('input-louvor').value = ev.necessita_louvor || '';
+      document.getElementById('input-diaconia').value = ev.necessita_diaconia || '';
       document.getElementById('input-observacoes').value = ev.observacoes || '';
 
       document.getElementById('acoes-coord-evento').classList.toggle('hidden', !modoCoordenador);
@@ -510,6 +582,9 @@
         ministerio: document.getElementById('input-ministerio').value.trim(),
         horario: document.getElementById('input-horario').value.trim(),
         local: document.getElementById('input-local').value.trim(),
+        necessita_midia: document.getElementById('input-midia').value,
+        necessita_louvor: document.getElementById('input-louvor').value,
+        necessita_diaconia: document.getElementById('input-diaconia').value,
         observacoes: document.getElementById('input-observacoes').value.trim(),
         atualizado_em: new Date().toISOString()
       };
