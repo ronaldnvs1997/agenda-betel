@@ -199,11 +199,45 @@
                 </div>
               </div>
 
+              <!-- Mural de Briefing da Mídia (Exibido quando Necessita de Mídia = Sim) -->
+              <div id="mural-bloco-midia" class="hidden bg-betel-vinhoEscuro/80 p-3.5 rounded-xl border border-betel-dourado/30 space-y-2 text-xs">
+                <span class="block text-xs font-bold uppercase tracking-wider text-betel-dourado">Briefing para Equipe de Mídia</span>
+                <p><span class="text-betel-dourado/70">Tema:</span> <strong id="mural-midia-tema" class="text-white">—</strong></p>
+                <p><span class="text-betel-dourado/70">Arte Instagram/WhatsApp:</span> <strong id="mural-midia-arte" class="text-white">—</strong></p>
+                <p><span class="text-betel-dourado/70">Banner Impresso:</span> <strong id="mural-midia-banner" class="text-white">—</strong></p>
+                <p><span class="text-betel-dourado/70">Formulário de Inscrição:</span> <strong id="mural-midia-inscricao" class="text-white">—</strong></p>
+                <div id="mural-midia-link-inscricao-wrap" class="hidden pt-1">
+                  <a id="mural-midia-link-inscricao" href="#" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded bg-betel-dourado text-betel-vinho font-bold hover:bg-white transition">
+                    🔗 Abrir Link de Inscrição
+                  </a>
+                </div>
+                <div id="mural-midia-info-wrap" class="hidden pt-1">
+                  <span class="block text-betel-dourado/70">Detalhes p/ Mídia:</span>
+                  <p id="mural-midia-info" class="text-white/95 whitespace-pre-line mt-0.5"></p>
+                </div>
+              </div>
+
               <div>
                 <span class="block text-xs uppercase tracking-wider text-betel-dourado/70">Observações &amp; Escala</span>
                 <p id="mural-observacoes" class="text-betel-dourado/95 whitespace-pre-line bg-betel-vinhoEscuro/60 p-3 rounded-lg mt-1">
                   Nenhuma observação registrada ainda.
                 </p>
+              </div>
+
+              <!-- Links Pós-Evento (Fotos e Vídeos) -->
+              <div id="mural-bloco-pos-evento" class="hidden bg-betel-vinhoEscuro/70 p-3.5 rounded-xl border border-betel-dourado/25 space-y-2">
+                <span class="block text-xs uppercase tracking-wider text-betel-dourado/80 font-bold">Galeria Pós-Evento</span>
+                <div class="flex flex-wrap gap-2">
+                  <a id="mural-link-fotos" href="#" target="_blank" rel="noopener noreferrer"
+                    class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-betel-dourado text-betel-vinho text-xs font-bold hover:bg-white transition">
+                    📸 Ver Fotos do Evento
+                  </a>
+                  <a id="mural-link-videos" href="#" target="_blank" rel="noopener noreferrer"
+                    class="hidden inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-betel-dourado text-betel-vinho text-xs font-bold hover:bg-white transition">
+                    🎬 Ver Vídeos do Evento
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -280,7 +314,7 @@
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label class="block text-xs font-semibold text-stone-700 mb-1">Necessita de Mídia? *</label>
-                  <select id="input-midia" required
+                  <select id="input-midia" required onchange="alternarSecaoMidia()"
                     class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
                     <option value="">Selecione...</option>
                     <option value="Sim">Sim</option>
@@ -306,13 +340,95 @@
                   </select>
                 </div>
               </div>
+
+              <!-- BLOCO CONDICIONAL: INFORMAÇÕES ADICIONAIS PARA MÍDIA -->
+              <div id="secao-detalhes-midia" class="hidden mt-4 pt-4 border-t border-amber-300/70 space-y-3 bg-white p-4 rounded-xl border border-amber-200">
+                <div class="flex items-center gap-2">
+                  <span class="text-base">🎥</span>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-betel-vinho">Informações Adicionais para Mídia</h4>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Tema do Evento *</label>
+                  <input type="text" id="input-midia-tema" placeholder="Ex: Firmados na Rocha / Encontro de Casais"
+                    class="w-full px-3.5 py-2 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm" />
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Precisa de arte para Instagram e WhatsApp?</label>
+                    <select id="input-midia-arte"
+                      class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                      <option value="">Selecione...</option>
+                      <option value="Sim">Sim</option>
+                      <option value="Não">Não</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Precisa de banner impresso p/ igreja?</label>
+                    <select id="input-midia-banner"
+                      class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                      <option value="">Selecione...</option>
+                      <option value="Sim">Sim</option>
+                      <option value="Não">Não</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-semibold text-stone-700 mb-1">Precisa de formulário de inscrição?</label>
+                    <select id="input-midia-inscricao" onchange="alternarCampoLinkInscricao()"
+                      class="w-full px-3 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm">
+                      <option value="">Selecione...</option>
+                      <option value="Sim">Sim</option>
+                      <option value="Não">Não</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Campo Livre para o Líder da Mídia vincular o Link do Formulário -->
+                <div id="campo-link-inscricao" class="hidden p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <label class="block text-xs font-semibold text-amber-950 mb-1">
+                    🔗 Link do Formulário de Inscrição <span class="font-normal text-stone-600">(para o líder da mídia vincular quando criar)</span>
+                  </label>
+                  <input type="url" id="input-midia-link-inscricao" placeholder="https://forms.gle/..."
+                    class="w-full px-3.5 py-2 rounded-lg border border-amber-300 bg-white focus:outline-none focus:border-betel-vinho text-sm" />
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Informações adicionais para a arte/divulgação</label>
+                  <textarea id="input-midia-info" rows="3"
+                    placeholder="Exemplo: Possui preletores convidados, será cobrado um valor por pessoa, público-alvo, versículo base..."
+                    class="w-full px-3.5 py-2 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm"></textarea>
+                </div>
+              </div>
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-stone-700 mb-1">Detalhes, Escala, Equipamentos e Observações</label>
-              <textarea id="input-observacoes" rows="4"
-                placeholder="Informe repertório, equipe escalada, necessidade específica de som/mídia, recepção ou avisos importantes..."
+              <label class="block text-xs font-semibold text-stone-700 mb-1">Detalhes Gerais, Escala e Observações</label>
+              <textarea id="input-observacoes" rows="3"
+                placeholder="Informe repertório, equipe escalada, recepção ou avisos gerais..."
                 class="w-full px-3.5 py-2.5 rounded-lg border border-stone-300 focus:outline-none focus:border-betel-vinho text-sm"></textarea>
+            </div>
+
+            <!-- REGISTRO PÓS-EVENTO (FOTOS E VÍDEOS) -->
+            <div class="p-4 rounded-xl bg-stone-50 border border-stone-200 space-y-3">
+              <div>
+                <p class="text-xs font-bold uppercase tracking-wider text-betel-vinho">📸 Registro Pós-Evento (Após o Término)</p>
+                <p class="text-[11px] text-stone-500">Insira abaixo os links das pastas/álbuns (Google Drive, Fotos, YouTube) após a realização do evento.</p>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Link das Fotos do Evento</label>
+                  <input type="url" id="input-link-fotos" placeholder="https://drive.google.com/..."
+                    class="w-full px-3.5 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-stone-700 mb-1">Link dos Vídeos do Evento</label>
+                  <input type="url" id="input-link-videos" placeholder="https://youtube.com/... ou Drive"
+                    class="w-full px-3.5 py-2 rounded-lg border border-stone-300 bg-white focus:outline-none focus:border-betel-vinho text-sm" />
+                </div>
+              </div>
             </div>
 
             <div class="pt-2 flex items-center justify-end gap-3">
@@ -662,7 +778,6 @@
         const listaPills = document.createElement('div');
         listaPills.className = 'mt-1 space-y-1';
 
-        // Eventos (Vinho)
         eventosDia.forEach(ev => {
           const pill = document.createElement('button');
           pill.className = 'w-full text-left px-2 py-1 rounded bg-betel-vinho text-betel-dourado text-[11px] sm:text-xs font-semibold leading-tight hover:bg-betel-vinhoEscuro shadow-sm transition truncate block';
@@ -672,7 +787,6 @@
           listaPills.appendChild(pill);
         });
 
-        // Reservas de Espaço (Âmbar / Dourado)
         reservasDia.forEach(res => {
           const pillRes = document.createElement('button');
           pillRes.className = 'w-full text-left px-1.5 py-0.5 rounded bg-amber-100 border border-amber-400 text-amber-950 text-[10px] sm:text-[11px] font-medium leading-tight hover:bg-amber-200 transition truncate block';
@@ -741,7 +855,28 @@
     }
 
     // =========================================================================
-    // NAVEGAÇÃO E FICHA DO EVENTO (COM CHECKBOXES FIXOS PARA LOCAL)
+    // CONTROLES CONDICIONAIS DA MÍDIA NA FICHA DO EVENTO
+    // =========================================================================
+    function alternarSecaoMidia() {
+      const precisaMidia = document.getElementById('input-midia').value === 'Sim';
+      const secao = document.getElementById('secao-detalhes-midia');
+      const inputTema = document.getElementById('input-midia-tema');
+
+      secao.classList.toggle('hidden', !precisaMidia);
+      inputTema.required = precisaMidia;
+
+      if (precisaMidia) {
+        alternarCampoLinkInscricao();
+      }
+    }
+
+    function alternarCampoLinkInscricao() {
+      const precisaInscricao = document.getElementById('input-midia-inscricao').value === 'Sim';
+      document.getElementById('campo-link-inscricao').classList.toggle('hidden', !precisaInscricao);
+    }
+
+    // =========================================================================
+    // NAVEGAÇÃO E FICHA DO EVENTO
     // =========================================================================
     function abrirPaginaEvento(id) {
       const ev = eventos.find(e => String(e.id) === String(id));
@@ -766,12 +901,65 @@
       document.getElementById('mural-diaconia').textContent = ev.necessita_diaconia || '—';
       document.getElementById('mural-observacoes').textContent = ev.observacoes || 'Nenhuma observação registrada ainda.';
 
+      // Atualiza Mural de Briefing da Mídia
+      const blocoMuralMidia = document.getElementById('mural-bloco-midia');
+      if (ev.necessita_midia === 'Sim') {
+        blocoMuralMidia.classList.remove('hidden');
+        document.getElementById('mural-midia-tema').textContent = ev.midia_tema || 'Não informado';
+        document.getElementById('mural-midia-arte').textContent = ev.midia_arte || '—';
+        document.getElementById('mural-midia-banner').textContent = ev.midia_banner || '—';
+        document.getElementById('mural-midia-inscricao').textContent = ev.midia_inscricao || '—';
+
+        const linkInscWrap = document.getElementById('mural-midia-link-inscricao-wrap');
+        const linkInscEl = document.getElementById('mural-midia-link-inscricao');
+        if (ev.midia_inscricao === 'Sim' && ev.midia_link_inscricao && ev.midia_link_inscricao.trim() !== '') {
+          linkInscEl.href = ev.midia_link_inscricao.trim();
+          linkInscWrap.classList.remove('hidden');
+        } else {
+          linkInscWrap.classList.add('hidden');
+        }
+
+        const infoMidiaWrap = document.getElementById('mural-midia-info-wrap');
+        if (ev.midia_info && ev.midia_info.trim() !== '') {
+          document.getElementById('mural-midia-info').textContent = ev.midia_info;
+          infoMidiaWrap.classList.remove('hidden');
+        } else {
+          infoMidiaWrap.classList.add('hidden');
+        }
+      } else {
+        blocoMuralMidia.classList.add('hidden');
+      }
+
+      // Atualiza Mural de Links Pós-Evento (Fotos e Vídeos)
+      const temFotos = ev.link_fotos && ev.link_fotos.trim() !== '';
+      const temVideos = ev.link_videos && ev.link_videos.trim() !== '';
+      const blocoPos = document.getElementById('mural-bloco-pos-evento');
+      const btnFotos = document.getElementById('mural-link-fotos');
+      const btnVideos = document.getElementById('mural-link-videos');
+
+      if (temFotos || temVideos) {
+        blocoPos.classList.remove('hidden');
+        if (temFotos) {
+          btnFotos.href = ev.link_fotos.trim();
+          btnFotos.classList.remove('hidden');
+        } else {
+          btnFotos.classList.add('hidden');
+        }
+        if (temVideos) {
+          btnVideos.href = ev.link_videos.trim();
+          btnVideos.classList.remove('hidden');
+        } else {
+          btnVideos.classList.add('hidden');
+        }
+      } else {
+        blocoPos.classList.add('hidden');
+      }
+
       // Preenche campos do formulário
       document.getElementById('input-lider').value = ev.lider || '';
       document.getElementById('input-ministerio').value = ev.ministerio || '';
       document.getElementById('input-horario').value = ev.horario || '';
 
-      // Marca os checkboxes de Local salvos (ex: "Templo, Salão de Festas")
       const locaisSalvos = (ev.local || '').split(',').map(s => s.trim());
       document.querySelectorAll('input[name="evento-local"]').forEach(cb => {
         cb.checked = locaisSalvos.includes(cb.value);
@@ -780,7 +968,20 @@
       document.getElementById('input-midia').value = ev.necessita_midia || '';
       document.getElementById('input-louvor').value = ev.necessita_louvor || '';
       document.getElementById('input-diaconia').value = ev.necessita_diaconia || '';
+
+      document.getElementById('input-midia-tema').value = ev.midia_tema || '';
+      document.getElementById('input-midia-arte').value = ev.midia_arte || '';
+      document.getElementById('input-midia-banner').value = ev.midia_banner || '';
+      document.getElementById('input-midia-inscricao').value = ev.midia_inscricao || '';
+      document.getElementById('input-midia-link-inscricao').value = ev.midia_link_inscricao || '';
+      document.getElementById('input-midia-info').value = ev.midia_info || '';
+
       document.getElementById('input-observacoes').value = ev.observacoes || '';
+      document.getElementById('input-link-fotos').value = ev.link_fotos || '';
+      document.getElementById('input-link-videos').value = ev.link_videos || '';
+
+      alternarSecaoMidia();
+      alternarCampoLinkInscricao();
 
       document.getElementById('acoes-coord-evento').classList.toggle('hidden', !modoCoordenador);
 
@@ -812,6 +1013,9 @@
         return;
       }
 
+      const precisaMidia = document.getElementById('input-midia').value;
+      const precisaInscricao = precisaMidia === 'Sim' ? document.getElementById('input-midia-inscricao').value : '';
+
       const btn = document.getElementById('btn-salvar-ficha');
       btn.disabled = true;
       btn.textContent = 'Salvando...';
@@ -821,10 +1025,20 @@
         ministerio: document.getElementById('input-ministerio').value.trim(),
         horario: document.getElementById('input-horario').value.trim(),
         local: locaisMarcados.join(', '),
-        necessita_midia: document.getElementById('input-midia').value,
+        necessita_midia: precisaMidia,
         necessita_louvor: document.getElementById('input-louvor').value,
         necessita_diaconia: document.getElementById('input-diaconia').value,
+        midia_tema: precisaMidia === 'Sim' ? document.getElementById('input-midia-tema').value.trim() : '',
+        midia_arte: precisaMidia === 'Sim' ? document.getElementById('input-midia-arte').value : '',
+        midia_banner: precisaMidia === 'Sim' ? document.getElementById('input-midia-banner').value : '',
+        midia_inscricao: precisaInscricao,
+        midia_link_inscricao: (precisaMidia === 'Sim' && precisaInscricao === 'Sim')
+          ? document.getElementById('input-midia-link-inscricao').value.trim()
+          : '',
+        midia_info: precisaMidia === 'Sim' ? document.getElementById('input-midia-info').value.trim() : '',
         observacoes: document.getElementById('input-observacoes').value.trim(),
+        link_fotos: document.getElementById('input-link-fotos').value.trim(),
+        link_videos: document.getElementById('input-link-videos').value.trim(),
         atualizado_em: new Date().toISOString()
       };
 
@@ -1059,7 +1273,7 @@
       btn.textContent = 'Confirmar Reserva(s)';
 
       if (error) {
-        mostrarAviso('Erro ao salvar reserva (verifique se a tabela reservas foi criada no Supabase): ' + error.message, 'erro');
+        mostrarAviso('Erro ao salvar reserva: ' + error.message, 'erro');
         return;
       }
 
@@ -1194,7 +1408,6 @@
 
           let offsetY = y + 7.5;
 
-          // Eventos Clicáveis no PDF
           eventosDia.forEach(ev => {
             const boxH = 6.8;
             if (offsetY + boxH <= y + alturaCelula - 1) {
@@ -1214,7 +1427,6 @@
             }
           });
 
-          // Reservas de Espaço no PDF
           reservasDia.forEach(res => {
             const boxH = 5.5;
             if (offsetY + boxH <= y + alturaCelula - 1) {
