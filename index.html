@@ -30,13 +30,22 @@
       }
     }
   </script>
-    <style>
+      <style>
     body { background-color: #FFFBF5; color: #2D1A1A; }
     .calendar-cell { min-height: 115px; transition: all 0.15s ease; }
     @media (max-width: 640px) { 
       .calendar-cell { min-height: 68px; padding: 2px; }
       .calendar-cell span.font-bold { font-size: 10px; }
       .calendar-cell button { font-size: 9px; padding: 2px 3px; line-height: 1.1; margin-bottom: 1px; }
+      
+      /* Ajuste fino para inputs, selects e textareas em celulares para não estourar e ter bom espaçamento */
+      input[type="text"], input[type="date"], input[type="time"], input[type="url"], input[type="password"], select, textarea {
+        font-size: 13px !important;
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        padding-top: 8px !important;
+        padding-bottom: 8px !important;
+      }
     }
   </style>
 </head>
