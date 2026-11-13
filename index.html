@@ -30,7 +30,7 @@
       }
     }
   </script>
-      <style>
+        <style>
     body { background-color: #FFFBF5; color: #2D1A1A; }
     .calendar-cell { min-height: 115px; transition: all 0.15s ease; }
     @media (max-width: 640px) { 
@@ -38,7 +38,10 @@
       .calendar-cell span.font-bold { font-size: 10px; }
       .calendar-cell button { font-size: 9px; padding: 2px 3px; line-height: 1.1; margin-bottom: 1px; }
       
-      /* Ajuste fino para inputs, selects e textareas em celulares para não estourar e ter bom espaçamento */
+      input[type="date"], input[type="time"] {
+        text-align: center !important;
+      }
+      
       input[type="text"], input[type="date"], input[type="time"], input[type="url"], input[type="password"], select, textarea {
         font-size: 13px !important;
         padding-left: 10px !important;
@@ -110,16 +113,16 @@
 
     <!-- TELA 1: CALENDÁRIO MENSAL -->
     <section id="tela-calendario">
-      <div class="flex flex-wrap items-center justify-between gap-4 mb-5 bg-white p-4 rounded-xl shadow-sm border border-stone-200">
-        <div class="flex items-center gap-2">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5 bg-white p-4 rounded-xl shadow-sm border border-stone-200">
+        <div class="flex items-center justify-center gap-2 w-full sm:w-auto">
           <button onclick="mudarMes(-1)" class="p-2 rounded-lg hover:bg-stone-100 text-betel-vinho font-bold" title="Mês anterior">◀</button>
-          <h2 id="titulo-mes-ano" class="font-serif text-xl sm:text-2xl font-bold text-betel-vinho min-w-[200px] text-center capitalize">
-            Fevereiro 2027
+          <h2 id="titulo-mes-ano" class="font-serif text-xl sm:text-2xl font-bold text-betel-vinho min-w-[180px] text-center capitalize">
+            Mês
           </h2>
           <button onclick="mudarMes(1)" class="p-2 rounded-lg hover:bg-stone-100 text-betel-vinho font-bold" title="Próximo mês">▶</button>
         </div>
 
-        <div class="flex flex-wrap items-center gap-4 text-xs text-stone-600">
+        <div class="flex flex-wrap items-center justify-center gap-4 text-xs text-stone-600">
           <span class="inline-flex items-center gap-1.5">
             <span class="w-3 h-3 rounded-sm bg-betel-vinho inline-block"></span> Evento (clique para preencher)
           </span>
@@ -821,8 +824,9 @@
     // Estado da Aplicação
     let eventos = [];
     let reservas = [];
-    let anoAtual = 2027;
-    let mesAtual = 1; // 0 = Janeiro, 1 = Fevereiro
+    const _d = new Date();
+    let anoAtual = _d.getFullYear();
+    let mesAtual = _d.getMonth(); // 0 = Janeiro, 1 = Fevereiro
     let modoCoordenador = false;
     let coordenadorAtual = null;
     let eventoSelecionado = null;
