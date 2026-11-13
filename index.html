@@ -30,10 +30,14 @@
       }
     }
   </script>
-  <style>
+    <style>
     body { background-color: #FFFBF5; color: #2D1A1A; }
     .calendar-cell { min-height: 115px; transition: all 0.15s ease; }
-    @media (max-width: 640px) { .calendar-cell { min-height: 85px; } }
+    @media (max-width: 640px) { 
+      .calendar-cell { min-height: 68px; padding: 2px; }
+      .calendar-cell span.font-bold { font-size: 10px; }
+      .calendar-cell button { font-size: 9px; padding: 2px 3px; line-height: 1.1; margin-bottom: 1px; }
+    }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
