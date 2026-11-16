@@ -10,6 +10,212 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
   <script>
+
+    // Função para calcular feriados nacionais fixos e móveis do Brasil para um dado ano
+    function obterFeriadosAno(ano) {
+      const feriados = {};
+      
+      // Fixos
+      feriados[`${ano}-01-01`] = "Confraternização Universal";
+      feriados[`${ano}-04-21`] = "Tiradentes";
+      feriados[`${ano}-05-01`] = "Dia do Trabalho";
+      feriados[`${ano}-09-07`] = "Independência do Brasil";
+      feriados[`${ano}-10-12`] = "Nossa Sra. Aparecida";
+      feriados[`${ano}-11-02`] = "Finados";
+      feriados[`${ano}-11-15`] = "Proclamação da República";
+      feriados[`${ano}-11-20`] = "Dia da Consciência Negra";
+      feriados[`${ano}-12-25`] = "Natal";
+
+      // Móveis (Cálculo de Páscoa pelo algoritmo de Meeus/Jones/Butcher)
+      const a = ano % 19;
+      const b = Math.floor(ano / 100);
+      const c = ano % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const mesPascoa = Math.floor((h + l - 7 * m + 114) / 31);
+      const diaPascoa = ((h + l - 7 * m + 114) % 31) + 1;
+      
+      const dataPascoa = new Date(ano, mesPascoa - 1, diaPascoa);
+      
+      // Sexta-feira Santa (-2 dias)
+      const sextaSanta = new Date(dataPascoa);
+      sextaSanta.setDate(dataPascoa.getDate() - 2);
+      feriados[sextaSanta.toISOString().split('T')[0]] = "Sexta-feira Santa";
+
+      // Carnaval (-47 dias)
+      const carnaval = new Date(dataPascoa);
+      carnaval.setDate(dataPascoa.getDate() - 47);
+      feriados[carnaval.toISOString().split('T')[0]] = "Carnaval";
+
+      // Corpus Christi (+60 dias)
+      const corpusChristi = new Date(dataPascoa);
+      corpusChristi.setDate(dataPascoa.getDate() + 60);
+      feriados[corpusChristi.toISOString().split('T')[0]] = "Corpus Christi";
+
+      return feriados;
+    }
+
+
+
+    // Função para perguntar o ano e gerar PDF anual de 12 páginas com feriados e eventos
+    function perguntarEAbrirPdfAnual() {
+      const anoInput = prompt("Digite o ano que deseja exportar em PDF (ex: 2027):", anoAtual);
+      if (!anoInput) return;
+      const anoEscolhido = parseInt(anoInput, 10);
+      if (isNaN(anoEscolhido) || anoEscolhido < 2000 || anoEscolhido > 2100) {
+        alert("Por favor, digite um ano válido (ex: 2027).");
+        return;
+      }
+      gerarPDFAnualCompleto(anoEscolhido);
+    }
+
+    function gerarPDFAnualCompleto(anoEscolhido) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const baseUrl = window.location.origin + window.location.pathname;
+      const feriadosAno = obterFeriadosAno(anoEscolhido);
+
+      for (let mIdx = 0; mIdx < 12; mIdx++) {
+        if (mIdx > 0) {
+          doc.addPage();
+        }
+
+        // Cabeçalho da página
+        doc.setFillColor(88, 33, 33);
+        doc.rect(0, 0, 297, 26, 'F');
+
+        doc.setTextColor(255, 225, 178);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('IGREJA BATISTA BETEL', 14, 11);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Calendário Ministerial e Feriados Nacionais — ${anoEscolhido}`, 14, 18);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.text(`${NOMES_MESES[mIdx].toUpperCase()} ${anoEscolhido}`, 283, 15, { align: 'right' });
+
+        const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+        const margemX = 14;
+        const topoGrade = 32;
+        const larguraCol = (297 - 28) / 7;
+        const alturaCabecalhoDias = 8;
+
+        doc.setFillColor(62, 21, 21);
+        doc.rect(margemX, topoGrade, 297 - 28, alturaCabecalhoDias, 'F');
+        doc.setTextColor(255, 225, 178);
+        doc.setFontSize(8.5);
+        diasSemana.forEach((dia, idx) => {
+          doc.text(dia, margemX + idx * larguraCol + larguraCol / 2, topoGrade + 5.5, { align: 'center' });
+        });
+
+        const primeiroDia = new Date(anoEscolhido, mIdx, 1).getDay();
+        const totalDias = new Date(anoEscolhido, mIdx + 1, 0).getDate();
+        const totalCelulas = Math.ceil((primeiroDia + totalDias) / 7) * 7;
+        const numLinhas = totalCelulas / 7;
+        const alturaCelula = (195 - (topoGrade + alturaCabecalhoDias)) / numLinhas;
+        const mesStr = String(mIdx + 1).padStart(2, '0');
+
+        let diaContador = 1;
+        for (let i = 0; i < totalCelulas; i++) {
+          const col = i % 7;
+          const row = Math.floor(i / 7);
+          const x = margemX + col * larguraCol;
+          const y = topoGrade + alturaCabecalhoDias + row * alturaCelula;
+
+          doc.setDrawColor(210, 200, 195);
+          doc.setFillColor(255, 253, 250);
+          doc.rect(x, y, larguraCol, alturaCelula, 'FD');
+
+          if (i >= primeiroDia && diaContador <= totalDias) {
+            const diaStr = String(diaContador).padStart(2, '0');
+            const dataISO = `${anoEscolhido}-${mesStr}-${diaStr}`;
+            const feriadoNome = feriadosAno[dataISO];
+            const eventosDia = eventos.filter(e => e.data === dataISO);
+            const reservasDia = reservas.filter(r => r.data === dataISO);
+
+            // Número do dia
+            doc.setTextColor(feriadoNome ? 180 : 88, feriadoNome ? 30 : 33, feriadoNome ? 30 : 33);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9.5);
+            doc.text(String(diaContador), x + 2.5, y + 5.5);
+
+            let offsetY = y + 7.5;
+
+            // Feriado no PDF
+            if (feriadoNome) {
+              const boxH = 5;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(254, 226, 226);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'F');
+                doc.setTextColor(153, 27, 27);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6);
+                const ferCortado = feriadoNome.length > 20 ? feriadoNome.substring(0, 19) + '…' : feriadoNome;
+                doc.text(`* ${ferCortado}`, x + 2.3, offsetY + 3.5);
+                offsetY += boxH + 1;
+              }
+            }
+
+            eventosDia.forEach(ev => {
+              const boxH = 5.8;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(88, 33, 33);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'F');
+
+                doc.setTextColor(255, 225, 178);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                const tituloCortado = ev.titulo.length > 18 ? ev.titulo.substring(0, 17) + '…' : ev.titulo;
+                doc.text(tituloCortado, x + 2.3, offsetY + 3.8);
+
+                const linkEvento = `${baseUrl}?evento=${ev.id}`;
+                doc.link(x + 1.5, offsetY, larguraCol - 3, boxH, { url: linkEvento });
+
+                offsetY += boxH + 0.8;
+              }
+            });
+
+            reservasDia.forEach(res => {
+              const boxH = 5;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(254, 243, 199);
+                doc.setDrawColor(217, 119, 6);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'FD');
+
+                doc.setTextColor(120, 53, 15);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6);
+                const txtRes = `${res.ministerio} (${res.espacos})`;
+                const txtCortado = txtRes.length > 20 ? txtRes.substring(0, 19) + '…' : txtRes;
+                doc.text(txtCortado, x + 2.3, offsetY + 3.5);
+
+                offsetY += boxH + 0.8;
+              }
+            });
+
+            diaContador++;
+          }
+        }
+
+        doc.setTextColor(120, 110, 110);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.text(`Página ${mIdx + 1} de 12 • Ano ${anoEscolhido} • Igreja Batista Betel`, 14, 203);
+      }
+
+      doc.save(`Calendario_Betel_Completo_${anoEscolhido}.pdf`);
+    }
+
     tailwind.config = {
       theme: {
         extend: {
@@ -72,7 +278,7 @@
           class="px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold border border-betel-dourado/50 text-betel-dourado hover:bg-betel-vinhoEscuro transition">
           🔒 Modo Coordenador
         </button>
-        <button onclick="gerarPDFInterativo()"
+        <button onclick="perguntarEAbrirPdfAnual()"
           class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold bg-betel-dourado text-betel-vinho hover:bg-white shadow transition flex items-center gap-1.5">
           <span>📄</span> Baixar PDF Interativo
         </button>
@@ -813,6 +1019,212 @@
   </footer>
 
   <script>
+
+    // Função para calcular feriados nacionais fixos e móveis do Brasil para um dado ano
+    function obterFeriadosAno(ano) {
+      const feriados = {};
+      
+      // Fixos
+      feriados[`${ano}-01-01`] = "Confraternização Universal";
+      feriados[`${ano}-04-21`] = "Tiradentes";
+      feriados[`${ano}-05-01`] = "Dia do Trabalho";
+      feriados[`${ano}-09-07`] = "Independência do Brasil";
+      feriados[`${ano}-10-12`] = "Nossa Sra. Aparecida";
+      feriados[`${ano}-11-02`] = "Finados";
+      feriados[`${ano}-11-15`] = "Proclamação da República";
+      feriados[`${ano}-11-20`] = "Dia da Consciência Negra";
+      feriados[`${ano}-12-25`] = "Natal";
+
+      // Móveis (Cálculo de Páscoa pelo algoritmo de Meeus/Jones/Butcher)
+      const a = ano % 19;
+      const b = Math.floor(ano / 100);
+      const c = ano % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const mesPascoa = Math.floor((h + l - 7 * m + 114) / 31);
+      const diaPascoa = ((h + l - 7 * m + 114) % 31) + 1;
+      
+      const dataPascoa = new Date(ano, mesPascoa - 1, diaPascoa);
+      
+      // Sexta-feira Santa (-2 dias)
+      const sextaSanta = new Date(dataPascoa);
+      sextaSanta.setDate(dataPascoa.getDate() - 2);
+      feriados[sextaSanta.toISOString().split('T')[0]] = "Sexta-feira Santa";
+
+      // Carnaval (-47 dias)
+      const carnaval = new Date(dataPascoa);
+      carnaval.setDate(dataPascoa.getDate() - 47);
+      feriados[carnaval.toISOString().split('T')[0]] = "Carnaval";
+
+      // Corpus Christi (+60 dias)
+      const corpusChristi = new Date(dataPascoa);
+      corpusChristi.setDate(dataPascoa.getDate() + 60);
+      feriados[corpusChristi.toISOString().split('T')[0]] = "Corpus Christi";
+
+      return feriados;
+    }
+
+
+
+    // Função para perguntar o ano e gerar PDF anual de 12 páginas com feriados e eventos
+    function perguntarEAbrirPdfAnual() {
+      const anoInput = prompt("Digite o ano que deseja exportar em PDF (ex: 2027):", anoAtual);
+      if (!anoInput) return;
+      const anoEscolhido = parseInt(anoInput, 10);
+      if (isNaN(anoEscolhido) || anoEscolhido < 2000 || anoEscolhido > 2100) {
+        alert("Por favor, digite um ano válido (ex: 2027).");
+        return;
+      }
+      gerarPDFAnualCompleto(anoEscolhido);
+    }
+
+    function gerarPDFAnualCompleto(anoEscolhido) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      const baseUrl = window.location.origin + window.location.pathname;
+      const feriadosAno = obterFeriadosAno(anoEscolhido);
+
+      for (let mIdx = 0; mIdx < 12; mIdx++) {
+        if (mIdx > 0) {
+          doc.addPage();
+        }
+
+        // Cabeçalho da página
+        doc.setFillColor(88, 33, 33);
+        doc.rect(0, 0, 297, 26, 'F');
+
+        doc.setTextColor(255, 225, 178);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.text('IGREJA BATISTA BETEL', 14, 11);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(`Calendário Ministerial e Feriados Nacionais — ${anoEscolhido}`, 14, 18);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.text(`${NOMES_MESES[mIdx].toUpperCase()} ${anoEscolhido}`, 283, 15, { align: 'right' });
+
+        const diasSemana = ['DOMINGO', 'SEGUNDA', 'TERÇA', 'QUARTA', 'QUINTA', 'SEXTA', 'SÁBADO'];
+        const margemX = 14;
+        const topoGrade = 32;
+        const larguraCol = (297 - 28) / 7;
+        const alturaCabecalhoDias = 8;
+
+        doc.setFillColor(62, 21, 21);
+        doc.rect(margemX, topoGrade, 297 - 28, alturaCabecalhoDias, 'F');
+        doc.setTextColor(255, 225, 178);
+        doc.setFontSize(8.5);
+        diasSemana.forEach((dia, idx) => {
+          doc.text(dia, margemX + idx * larguraCol + larguraCol / 2, topoGrade + 5.5, { align: 'center' });
+        });
+
+        const primeiroDia = new Date(anoEscolhido, mIdx, 1).getDay();
+        const totalDias = new Date(anoEscolhido, mIdx + 1, 0).getDate();
+        const totalCelulas = Math.ceil((primeiroDia + totalDias) / 7) * 7;
+        const numLinhas = totalCelulas / 7;
+        const alturaCelula = (195 - (topoGrade + alturaCabecalhoDias)) / numLinhas;
+        const mesStr = String(mIdx + 1).padStart(2, '0');
+
+        let diaContador = 1;
+        for (let i = 0; i < totalCelulas; i++) {
+          const col = i % 7;
+          const row = Math.floor(i / 7);
+          const x = margemX + col * larguraCol;
+          const y = topoGrade + alturaCabecalhoDias + row * alturaCelula;
+
+          doc.setDrawColor(210, 200, 195);
+          doc.setFillColor(255, 253, 250);
+          doc.rect(x, y, larguraCol, alturaCelula, 'FD');
+
+          if (i >= primeiroDia && diaContador <= totalDias) {
+            const diaStr = String(diaContador).padStart(2, '0');
+            const dataISO = `${anoEscolhido}-${mesStr}-${diaStr}`;
+            const feriadoNome = feriadosAno[dataISO];
+            const eventosDia = eventos.filter(e => e.data === dataISO);
+            const reservasDia = reservas.filter(r => r.data === dataISO);
+
+            // Número do dia
+            doc.setTextColor(feriadoNome ? 180 : 88, feriadoNome ? 30 : 33, feriadoNome ? 30 : 33);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9.5);
+            doc.text(String(diaContador), x + 2.5, y + 5.5);
+
+            let offsetY = y + 7.5;
+
+            // Feriado no PDF
+            if (feriadoNome) {
+              const boxH = 5;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(254, 226, 226);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'F');
+                doc.setTextColor(153, 27, 27);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6);
+                const ferCortado = feriadoNome.length > 20 ? feriadoNome.substring(0, 19) + '…' : feriadoNome;
+                doc.text(`* ${ferCortado}`, x + 2.3, offsetY + 3.5);
+                offsetY += boxH + 1;
+              }
+            }
+
+            eventosDia.forEach(ev => {
+              const boxH = 5.8;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(88, 33, 33);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'F');
+
+                doc.setTextColor(255, 225, 178);
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(6.5);
+                const tituloCortado = ev.titulo.length > 18 ? ev.titulo.substring(0, 17) + '…' : ev.titulo;
+                doc.text(tituloCortado, x + 2.3, offsetY + 3.8);
+
+                const linkEvento = `${baseUrl}?evento=${ev.id}`;
+                doc.link(x + 1.5, offsetY, larguraCol - 3, boxH, { url: linkEvento });
+
+                offsetY += boxH + 0.8;
+              }
+            });
+
+            reservasDia.forEach(res => {
+              const boxH = 5;
+              if (offsetY + boxH <= y + alturaCelula - 1) {
+                doc.setFillColor(254, 243, 199);
+                doc.setDrawColor(217, 119, 6);
+                doc.roundedRect(x + 1.5, offsetY, larguraCol - 3, boxH, 1, 1, 'FD');
+
+                doc.setTextColor(120, 53, 15);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(6);
+                const txtRes = `${res.ministerio} (${res.espacos})`;
+                const txtCortado = txtRes.length > 20 ? txtRes.substring(0, 19) + '…' : txtRes;
+                doc.text(txtCortado, x + 2.3, offsetY + 3.5);
+
+                offsetY += boxH + 0.8;
+              }
+            });
+
+            diaContador++;
+          }
+        }
+
+        doc.setTextColor(120, 110, 110);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.text(`Página ${mIdx + 1} de 12 • Ano ${anoEscolhido} • Igreja Batista Betel`, 14, 203);
+      }
+
+      doc.save(`Calendario_Betel_Completo_${anoEscolhido}.pdf`);
+    }
+
     // =========================================================================
     // CONFIGURAÇÃO DO SUPABASE
     // =========================================================================
@@ -1133,9 +1545,12 @@
       const eventosDoMes = [];
       const reservasDoMes = [];
 
+      const feriadosAnoCorrente = obterFeriadosAno(anoAtual);
+
       for (let dia = 1; dia <= totalDiasMes; dia++) {
         const diaStr = String(dia).padStart(2, '0');
         const dataISO = `${anoAtual}-${mesStr}-${diaStr}`;
+        const feriadoNome = feriadosAnoCorrente[dataISO];
         const eventosDia = eventos.filter(e => e.data === dataISO);
         const reservasDia = reservas.filter(r => r.data === dataISO);
 
@@ -1143,11 +1558,11 @@
         reservasDoMes.push(...reservasDia);
 
         const celula = document.createElement('div');
-        celula.className = 'calendar-cell p-1.5 sm:p-2 flex flex-col justify-between bg-white hover:bg-betel-creme';
+        celula.className = `calendar-cell p-1.5 sm:p-2 flex flex-col justify-between ${feriadoNome ? 'bg-red-50/40' : 'bg-white'} hover:bg-betel-creme`;
 
         const topo = document.createElement('div');
         topo.className = 'flex items-center justify-between';
-        topo.innerHTML = `<span class="text-xs sm:text-sm font-bold ${eventosDia.length ? 'text-betel-vinho' : 'text-stone-500'}">${dia}</span>`;
+        topo.innerHTML = `<span class="text-xs sm:text-sm font-bold ${feriadoNome ? 'text-red-700' : (eventosDia.length ? 'text-betel-vinho' : 'text-stone-500')}">${dia}</span>`;
 
         if (modoCoordenador) {
           const btnGroup = document.createElement('div');
@@ -1171,6 +1586,13 @@
         }
 
         celula.appendChild(topo);
+        if (feriadoNome) {
+          const badgeFeriado = document.createElement('div');
+          badgeFeriado.className = 'text-[9px] sm:text-[10px] text-red-700 font-semibold bg-red-100 px-1 rounded truncate mt-0.5';
+          badgeFeriado.textContent = `★ ${feriadoNome}`;
+          badgeFeriado.title = feriadoNome;
+          celula.appendChild(badgeFeriado);
+        }
 
         const listaPills = document.createElement('div');
         listaPills.className = 'mt-1 space-y-1';
